@@ -1,11 +1,7 @@
 <template>
 	<div class="hello">
-		<h1>Projects</h1>
-		<b-table striped hover :items="projects" :fields="fields">
-			<template #cell(nameage)="data">
-				<b-button> delete </b-button> {{data.item._id}}
-			</template>
-		</b-table>
+		<h1>Project sidebar</h1>
+
   </div>
 </template>
 
@@ -13,7 +9,7 @@
 import axios from "axios"
 
 export default {
-	name: 'GPProjects',
+	name: 'GPProjectSidebar',
 	data() {
 		return {
 			projects: null,
@@ -23,7 +19,7 @@ export default {
 
 	methods: {
 		async loadData() {
-			var response = await axios("/api/v2/projects?sort=title&limit=100")
+			var response = await axios("/api/v2/projects?sort=title")
 			this.projects = response.data.data
 		}
 	},

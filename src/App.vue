@@ -3,10 +3,10 @@
 		<b-navbar type="dark" variant="info">
 			<b-navbar-brand href="#">GLAMpipe</b-navbar-brand>
 		</b-navbar>
-	
+
 
 		<!-- ROUTE VIEW (main) -->
-		<b-container class="bv-example-row">
+		<b-container >
 			<router-view class="view" v-if="!error"></router-view>
 			<div class="alert alert-danger" v-if="error">{{error}}</div>
 		</b-container>

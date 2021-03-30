@@ -1,21 +1,23 @@
 <template>
 	<b-row>
-		<b-col cols="2">SIVUBAR
-			
+		<b-col cols="4">
+			<GPMainSidebar/>
+
 		</b-col>
-		<b-col cols="10">
-			<GPprojects/>
+		<b-col cols="8">
+			<GPProjects/>
 		</b-col>
 	</b-row>
 
 </template>
 
 <script>
-import GPprojects from './GPprojects.vue'
+import GPProjects from './GPprojects.vue'
+import GPMainSidebar from './GPmainSidebar.vue'
 
 export default {
-  name: 'GPmain',
-  components: {GPprojects},
+  name: 'GPMain',
+  components: {GPProjects, GPMainSidebar},
   props: {
     msg: String
   }
