@@ -12,6 +12,7 @@ Vue.config.productionTip = false
 // 2. Define route components
 import GPmain from './components/GPmain.vue'
 import GPprojects from './components/GPprojects.vue'
+import GPproject from './components/GPproject.vue'
 
 // 3. Create the router
 const router = new VueRouter({
@@ -20,6 +21,8 @@ const router = new VueRouter({
   routes: [
 	{ path: '/', component: GPmain },
 	{ path: '/projects', component: GPprojects },
+	{ path: '/projects/:id', component: GPproject },
+	{ path: '/projects/:id/collection/:collection', component: GPproject },
   ]
 })
 

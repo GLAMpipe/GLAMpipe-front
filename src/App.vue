@@ -1,12 +1,12 @@
 <template>
 	<div id="app">
 		<b-navbar type="dark" variant="info">
-			<b-navbar-brand href="#">GLAMpipe</b-navbar-brand>
+			<b-link :to="{ path: '/'}"><b-navbar-brand >GLAMpipe</b-navbar-brand></b-link>
 		</b-navbar>
 
 
 		<!-- ROUTE VIEW (main) -->
-		<b-container >
+		<b-container fluid style="padding:0px; margin:0px">
 			<router-view class="view" v-if="!error"></router-view>
 			<div class="alert alert-danger" v-if="error">{{error}}</div>
 		</b-container>

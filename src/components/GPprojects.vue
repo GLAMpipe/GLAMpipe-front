@@ -2,8 +2,8 @@
 	<div class="hello">
 		<h1>Projects</h1>
 		<b-table striped hover :items="projects" :fields="fields">
-			<template #cell(nameage)="data">
-				<b-button> delete </b-button> {{data.item._id}}
+			<template #cell(title)="data">
+				<b-link :to="{ path: '/projects/' + data.item._id }"> {{data.item.title}}</b-link>
 			</template>
 		</b-table>
   </div>
@@ -17,7 +17,11 @@ export default {
 	data() {
 		return {
 			projects: null,
-			fields: ['title', { key: 'nameage', label: 'First name and age' }]
+			fields: [
+				'title',
+				'description',
+				{ key: 'collection_count', label: 'collection count' }
+			]
 		}
 	},
 
