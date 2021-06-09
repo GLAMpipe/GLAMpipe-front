@@ -1,16 +1,18 @@
 <style scoped>
-
+.pointer {
+  cursor: pointer;
+}
 </style>
 
 <template>
-	<div class="hello">
+	<div class="project-sidebar" v-show="showSideBar">
 
 		<!-- // COLLECTION LIST -->
 		<div id="collection-nav" v-if="project && current_collection">
 			<b-navbar toggleable="m" >
 				<b-navbar-brand href="#">{{project.title}} > {{current_collection.title}}</b-navbar-brand>
 
-				<b-navbar-toggle target="nav-collapse" ></b-navbar-toggle>
+				<b-navbar-toggle target="nav-collapse" ></b-navbar-toggle><span @click="$G.showSideBar = !$G.showSideBar">hide</span>
 
 				<b-collapse id="nav-collapse" is-nav>
 					<b-navbar-nav class="ml-auto" v-for="(collection, index) in project.collections" :key="index">
@@ -27,12 +29,12 @@
 		<!-- // NODE LIST -->
 		<div id="node-nav" v-if="project && nodes_sorted">
 			<div v-for="type in nodetypes" :key="type">
-				{{type.label}}
-				<b-card v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
+				<div style="margin-top:15px"><h5>{{type.label}}  <b-link>add</b-link></h5></div>
+				<b-card header-bg-variant="info" header-text-variant="white" v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
 					<template #header>
-						<h5 class="mb-0">{{node.title}}</h5>
+						<h6 @click="$G.current_node = node" class="mb-0 pointer">{{node.title}}</h6>
 					</template>
-					<b-card-body>
+					<b-card-body style="padding:0.25rem" text-variant="info">
 						<!--<b-card-title>{{node.title}}</b-card-title>-->
 						<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
 						<b-card-text>
@@ -53,9 +55,12 @@ export default {
 	name: 'GPProjectSidebar',
 	data() {
 		return {
+			showSideBar: true,
 			project: null,
 			nodes: null,
 			nodes_sorted: null,
+			current_collection: null,
+			current_node: null,
 			nodetypes: [
 				{key:'source', label:'Read data'},
 				{key:'process', label:'Process the data'},
@@ -98,8 +103,15 @@ export default {
 			}
 		},
 		setCurrentCollection() {
-			this.current_collection = this.project.collections.find(col => col.name == this.$route.params.collection)
-			this.loadNodes()
+			var collection = this.project.collections.find(col => col.name == this.$route.params.collection)
+			if(!this.current_collection) {
+				this.current_collection = collection
+				this.loadNodes()
+			}
+			if(this.current_collection && this.current_collection.name != collection.name) {
+				this.current_collection = collection
+				this.loadNodes()
+			}
 		}
 	},
 

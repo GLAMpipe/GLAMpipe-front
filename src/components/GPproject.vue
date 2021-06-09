@@ -1,12 +1,12 @@
 <template>
 	<b-row>
-		<b-col cols="3">
+		<b-button v-show="!$G.showSideBar" @click="$G.showSideBar = !$G.showSideBar">></b-button>
+		<b-col cols="3" v-show="$G.showSideBar">
 			<GPprojectSidebar/>
-
 		</b-col>
+
 		<b-col cols="9">
-
-
+			<GPdataTable/>
 		</b-col>
 	</b-row>
 
@@ -14,11 +14,12 @@
 
 <script>
 import GPprojectSidebar from './GPprojectSidebar.vue'
+import GPdataTable from './GPdataTable.vue'
 import axios from "axios"
 
 export default {
 	name: 'GPProject',
-	components: {GPprojectSidebar},
+	components: {GPprojectSidebar, GPdataTable},
 	data() {
 		return {
 			project: null,
