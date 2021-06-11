@@ -1,7 +1,7 @@
 <template>
 	<div class="hello">
-		<h1>Projects</h1>
-		<b-table striped hover :items="projects" :fields="fields">
+		<h1 class="h2">Projects</h1>
+		<b-table small striped hover :items="projects" :fields="fields">
 			<template #cell(title)="data">
 				<b-link :to="{ path: '/projects/' + data.item._id }"> {{data.item.title}}</b-link>
 			</template>

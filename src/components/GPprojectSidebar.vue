@@ -2,6 +2,9 @@
 .pointer {
   cursor: pointer;
 }
+.active_node {
+	background-color: #cef5e1
+}
 </style>
 
 <template>
@@ -30,9 +33,9 @@
 		<div id="node-nav" v-if="project && nodes_sorted">
 			<div v-for="type in nodetypes" :key="type">
 				<div style="margin-top:15px"><h5>{{type.label}}  <b-link>add</b-link></h5></div>
-				<b-card header-bg-variant="info" header-text-variant="white" v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
+				<b-card :class = "$G.current_node && $G.current_node._id == node._id?'active_node':'else_class'"  header-bg-variant="info" header-text-variant="white" v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
 					<template #header>
-						<h6 @click="$G.current_node = node" class="mb-0 pointer">{{node.title}}</h6>
+						<h6 @click="setCurrentNode(node)" class="mb-0 pointer">{{node.title}}</h6>
 					</template>
 					<b-card-body style="padding:0.25rem" text-variant="info">
 						<!--<b-card-title>{{node.title}}</b-card-title>-->
@@ -112,6 +115,11 @@ export default {
 				this.current_collection = collection
 				this.loadNodes()
 			}
+		},
+		setCurrentNode(node) {
+			if(!this.$G.current_node) this.$G.current_node = node
+			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
+			else  this.$G.current_node = node
 		}
 	},
 

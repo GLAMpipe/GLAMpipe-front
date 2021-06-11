@@ -1,20 +1,12 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
-import hljs from 'highlight.js/lib/core';
-import javascript from 'highlight.js/lib/languages/javascript';
-import hljsVuePlugin from "@highlightjs/vue-plugin";
-
-hljs.registerLanguage('javascript', javascript);
-import "highlight.js/styles/github.css"
-
 
 import App from './App.vue'
 
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(VueRouter)
-Vue.use(hljsVuePlugin)
 
 Vue.config.productionTip = false
 

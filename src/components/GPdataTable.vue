@@ -1,5 +1,180 @@
+
+<style >
+.pointer {
+  cursor: pointer;
+}
+
+.settingtable td:first-child, .settingtable th:first-child {
+   padding-left: 0px;
+}
+
+.settingtable th, .settingtable td {
+   padding-left: 10px;
+}
+
+
+.settingslist {
+	margin: 1em 0;
+}
+
+.settingslist th, .settingslist td {
+	padding-left:20px;
+	border-bottom:none;
+}
+
+.settingslist td:first-child, th:first-child {
+	padding-left:0px;
+}
+
+
+settingscontainer {
+	display:block;
+	background-color: rgba(255,255,255,1);
+	margin-bottom:1px;
+}
+
+settingsheader {
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	display: flex;
+	-ms-flex-align: center;
+	-webkit-align-items: center;
+	-webkit-box-align: center;
+	height: 60px;
+	padding: 0px 20px;
+	cursor: pointer;
+}
+
+settingsheader:hover {
+	border-left: solid rgba(52,123,255,1) 10px;
+	padding-left:10px;
+}
+
+.settingstitle, h2 {
+   font-size: 18px;
+}
+
+settingssubtitle {
+	display: -webkit-flex;
+	align-items: flex-end;
+	display: flex;
+	margin-left: 20px;
+	padding: 20px 0px 10px 0px;
+}
+
+settingsblock {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   -webkit-flex-direction: row;
+   flex-direction: row;
+   display: flex;
+   flex-wrap: wrap;
+}
+
+settingsrow {
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	-webkit-flex-direction: row;
+	flex-direction: row;
+	display: flex;
+}
+
+submitblock {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+   padding: 10px 20px 20px 20px;
+}
+
+
+setting {
+   display: flex;
+   width: 100%;
+   background-color: #efefef;
+   margin: 7px 20px;
+   padding: 10px;
+   border-radius: 5px;
+   justify-content: space-between;
+   flex-wrap: wrap;
+   max-height:600px;
+   overflow: auto;
+}
+
+.one {
+	flex-direction: column;
+}
+
+
+
+settingtitle {
+	display:block;
+	font-weight: 500;
+}
+
+settinginfo {
+   flex: 1 0 300px;
+}
+
+settingaction {
+   width: 300px;
+   vertical-align: middle;
+   flex: 1 0 300px;
+}
+
+dataheader {
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
+   -ms-flex-align: center;
+   -webkit-align-items: center;
+   -webkit-box-align: center;
+   height: 60px;
+   padding: 0px 20px;
+   justify-content: flex-end;
+}
+
+
+settinglistcontainer {
+	display: block;
+	max-height:400px;
+	border: 1px solid rgba(0, 0, 0, 0.15);
+	overflow: auto;
+	padding:10px;
+}
+
+settinglistcontainer input[type=checkbox] {
+	width: 20px;
+}
+
+settinglistcontainer ul {
+	list-style-type: none;
+}
+
+settinglistcontainer label {
+	display: inline
+}
+
+</style>
+
 <template>
 	<div v-if="data">
+		<b-card v-if="$G.current_node" header-bg-variant="info" header-text-variant="white" header="Info">
+			<template #header>
+				<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">SELECTED NODE {{$G.current_node.title}}</h6>
+			</template>
+			<b-card-body style="padding:0.25rem" text-variant="info">
+				<b-card-sub-title class="mb-2">{{$G.current_node.description}}</b-card-sub-title>
+				<b-tabs v-if="showNodeSettings" content-class="mt-3" >
+					<b-tab title="Settings" active>
+						<div v-html="$G.current_node.views.settings"/>
+					</b-tab>
+
+					<b-tab title="Parameters (read only)">
+						{{$G.current_node.params}}
+					</b-tab>
+				</b-tabs>
+			</b-card-body>
+		</b-card>
 		<b-navbar toggleable="m" >
 			<b-navbar-brand href="#">Data</b-navbar-brand>
 
@@ -8,10 +183,6 @@
 
 			<b-collapse id="nav-table" is-nav @shown="populateTabs">
 				<b-tabs content-class="mt-3" >
-					<b-tab title="Node settings" >
-						{{$G.current_node.nodeid}}
-						{{$G.current_node.settings}}
-					</b-tab>
 
 					<b-tab title="Fields" active>
 						<b-container v-if="schema" class="bv-example-row mb-3">
@@ -45,10 +216,10 @@
 			</b-collapse>
 		</b-navbar>
 
-		<!-- DATA TABLE -->
 
-		<highlightjs language='javascript' code="var x = 5;" />
+		<!-- DATA TABLE -->
 		<b-table small striped :items="data.data" :fields="selected"></b-table>
+
 	</div>
 
 </template>
@@ -61,6 +232,7 @@ export default {
 	name: 'GPdataTable',
 	data() {
 		return {
+			koe: '',
 			data: null,
 			schema: null,
 			pageCount: 0,
@@ -70,7 +242,8 @@ export default {
 			fields: [],
 			query_keys: [],
 			query_types: [],
-			query_type_list: ['is exactly', 'contains']
+			query_type_list: ['is exactly', 'contains'],
+			showNodeSettings: true
 		}
 	},
 
@@ -110,6 +283,11 @@ export default {
 			if(this.selected.length != 0) return
 			if(this.$route.query.fields) {
 				this.selected =  this.$route.query.fields.split(',')
+			} else if(this.schema && this.schema.keys) {
+				this.selected = this.schema.keys.slice(0,5)
+			} else {
+				await this.loadSchema()
+				this.selected = this.schema.keys.slice(0,5)
 			}
 		},
 		async setUserFields() {
