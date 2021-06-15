@@ -1,14 +1,28 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import LoadScript from 'vue-plugin-load-script';
+
 
 import App from './App.vue'
 
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(VueRouter)
+Vue.use(LoadScript)
 
 Vue.config.productionTip = false
+/*
+Vue.component('nodesettings', {
+  props: ['code'],
+  render(h){
+    // render a 'container' div
+    return h('div', [
+      h(Vue.compile(this.code)) // compile and render 'code' string
+    ])
+  }
+})
+*/
 
 // 2. Define route components
 import GPmain from './components/GPmain.vue'
@@ -37,6 +51,7 @@ var shared = new Vue({
 		login: true ,
 		error: null,
 		user: null,
+		current_project: null,
 		current_node: null,
 		showSideBar: true
 	},
@@ -54,6 +69,7 @@ var shared = new Vue({
 
 	},
 	computed: {
+		c_node: function() { return this.current_node},
 		local: function() {
 			if(window.location.hostname == 'localhost')
 				return ''
@@ -62,6 +78,7 @@ var shared = new Vue({
 		}
 	}
 })
+
 
 shared.install = function(){
   Object.defineProperty(Vue.prototype, '$G', {

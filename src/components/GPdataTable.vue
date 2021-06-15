@@ -26,6 +26,15 @@
 	padding-left:0px;
 }
 
+setting {
+	font-family: 'Open Sans', sans-serif;
+	font-size: 13px;
+	font-weight:300;
+	color:#444;
+	background-color: #444;
+	padding: 0px;
+}
+
 
 settingscontainer {
 	display:block;
@@ -158,25 +167,9 @@ settinglistcontainer label {
 
 <template>
 	<div v-if="data">
-		<b-card v-if="$G.current_node" header-bg-variant="info" header-text-variant="white" header="Info">
-			<template #header>
-				<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">SELECTED NODE {{$G.current_node.title}}</h6>
-			</template>
-			<b-card-body style="padding:0.25rem" text-variant="info">
-				<b-card-sub-title class="mb-2">{{$G.current_node.description}}</b-card-sub-title>
-				<b-tabs v-if="showNodeSettings" content-class="mt-3" >
-					<b-tab title="Settings" active>
-						<div v-html="$G.current_node.views.settings"/>
-					</b-tab>
 
-					<b-tab title="Parameters (read only)">
-						{{$G.current_node.params}}
-					</b-tab>
-				</b-tabs>
-			</b-card-body>
-		</b-card>
 		<b-navbar toggleable="m" >
-			<b-navbar-brand href="#">Data</b-navbar-brand>
+			<b-navbar-brand href="#"></b-navbar-brand>
 
 			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
 			<b-navbar-toggle target="nav-table"></b-navbar-toggle>
@@ -216,7 +209,6 @@ settinglistcontainer label {
 			</b-collapse>
 		</b-navbar>
 
-
 		<!-- DATA TABLE -->
 		<b-table small striped :items="data.data" :fields="selected"></b-table>
 
@@ -227,12 +219,13 @@ settinglistcontainer label {
 <script>
 
 import axios from "axios"
+import $ from 'jquery'
 
 export default {
 	name: 'GPdataTable',
 	data() {
 		return {
-			koe: '',
+			node_settings:{},
 			data: null,
 			schema: null,
 			pageCount: 0,
@@ -243,7 +236,7 @@ export default {
 			query_keys: [],
 			query_types: [],
 			query_type_list: ['is exactly', 'contains'],
-			showNodeSettings: true
+			settings_html: "<input name='pp'></input><h2>koe</h2>"
 		}
 	},
 
@@ -300,6 +293,8 @@ export default {
 
 	created: function() {
 			this.loadData();
+
+			$(document).on('click', 'setting input', function(){console.log($(this).val())});
 			//this.loadSchema()
 	}
 }

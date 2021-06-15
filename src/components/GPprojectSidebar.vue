@@ -3,8 +3,13 @@
   cursor: pointer;
 }
 .active_node {
-	background-color: #cef5e1
+	background-color: #e4e8e3;
 }
+.bg-info {
+	background:none !important;
+	color:black
+}
+
 </style>
 
 <template>
@@ -13,9 +18,9 @@
 		<!-- // COLLECTION LIST -->
 		<div id="collection-nav" v-if="project && current_collection">
 			<b-navbar toggleable="m" >
-				<b-navbar-brand href="#">{{project.title}} > {{current_collection.title}}</b-navbar-brand>
-
-				<b-navbar-toggle target="nav-collapse" ></b-navbar-toggle><span @click="$G.showSideBar = !$G.showSideBar">hide</span>
+				<span @click="$G.showSideBar = !$G.showSideBar">hide</span>
+				<b-navbar-brand href="#">{{current_collection.title}}</b-navbar-brand>
+				<b-navbar-toggle target="nav-collapse" ></b-navbar-toggle>
 
 				<b-collapse id="nav-collapse" is-nav>
 					<b-navbar-nav class="ml-auto" v-for="(collection, index) in project.collections" :key="index">
@@ -33,7 +38,7 @@
 		<div id="node-nav" v-if="project && nodes_sorted">
 			<div v-for="type in nodetypes" :key="type">
 				<div style="margin-top:15px"><h5>{{type.label}}  <b-link>add</b-link></h5></div>
-				<b-card :class = "$G.current_node && $G.current_node._id == node._id?'active_node':'else_class'"  header-bg-variant="info" header-text-variant="white" v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
+				<b-card :class = "$G.current_node && $G.current_node._id == node._id?'active_node':'else_class'"  v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
 					<template #header>
 						<h6 @click="setCurrentNode(node)" class="mb-0 pointer">{{node.title}}</h6>
 					</template>
@@ -44,7 +49,6 @@
 
 						</b-card-text>
 					</b-card-body>
-
 				</b-card>
 			</div>
 		</div>
@@ -56,14 +60,17 @@ import axios from "axios"
 
 export default {
 	name: 'GPProjectSidebar',
+	props: {
+		current_collection: Object,
+
+	},
 	data() {
 		return {
 			showSideBar: true,
 			project: null,
 			nodes: null,
-			nodes_sorted: null,
-			current_collection: null,
 			current_node: null,
+			nodes_sorted: null,
 			nodetypes: [
 				{key:'source', label:'Read data'},
 				{key:'process', label:'Process the data'},
@@ -115,11 +122,17 @@ export default {
 				this.current_collection = collection
 				this.loadNodes()
 			}
+			//this.$emit('update:current_collection', collection)
 		},
 		setCurrentNode(node) {
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
 			else  this.$G.current_node = node
+			//this.$emit('update:current_node', this.$G.current_node)
+			//this.parseSettingsHTML()
+		},
+		parseSettingsHTML() {
+			this.$G.current_node.views.settings = "<input id='testi'/>"
 		}
 	},
 
