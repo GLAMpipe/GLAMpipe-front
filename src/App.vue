@@ -5,12 +5,12 @@
 </style>
 <template>
 	<div id="app">
-		<b-navbar type="dark" variant="info">
+		<b-navbar type="dark" variant="info" >
 
 			<b-link :to="{ path: '/'}"><b-navbar-brand >GLAMpipe </b-navbar-brand></b-link>
 
-			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:120px">Project: <span > {{$G.current_project.title}}</span></b-navbar-brand>
-			<b-navbar-brand v-if="$G.current_collection" style="font-size:1.0rem; margin-left:120px">Collection: <span > {{$G.current_collection.name}}</span></b-navbar-brand>
+			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:20%"><span ><b> {{$G.current_project.title}}</b></span></b-navbar-brand>
+			<b-navbar-brand v-if="$G.current_collection" style="font-size:1.0rem; margin-left:120px">Collection: <span ><b> {{$G.current_collection.title}}</b></span></b-navbar-brand>
 
 		</b-navbar>
 

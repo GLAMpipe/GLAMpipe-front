@@ -1,14 +1,15 @@
 
 <template>
 	<b-row>
-		<b-button v-show="!$G.showSideBar" @click="$G.showSideBar = !$G.showSideBar">></b-button>
+		<b-button v-show="!$G.showSideBar" @click="$G.showSideBar = !$G.showSideBar"><b-icon icon="caret-right"></b-icon></b-button>
 		<b-col cols="3" v-show="$G.showSideBar">
-			<GPprojectSidebar :current_collection.sync="c_collection" />
+			<b-container fluid>
+				<GPprojectSidebar />
+			</b-container>
 		</b-col>
 
 		<b-col cols="9">
-
-			<GPnodeSettings />
+			<GPnodeRun />
 			<GPdataTable/>
 		</b-col>
 	</b-row>
@@ -17,13 +18,13 @@
 
 <script>
 import GPprojectSidebar from './GPprojectSidebar.vue'
-import GPnodeSettings from './GPnodeSettings.vue'
+import GPnodeRun from './GPnodeRun.vue'
 import GPdataTable from './GPdataTable.vue'
 import axios from "axios"
 
 export default {
 	name: 'GPProject',
-	components: {GPprojectSidebar, GPdataTable, GPnodeSettings},
+	components: {GPprojectSidebar, GPdataTable, GPnodeRun},
 	data() {
 		return {
 			project: null,
@@ -42,6 +43,7 @@ export default {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
 			this.project = response.data
 			this.$G.current_project = this.project
+			this.$G.current_node = null
 		}
 	},
 	created: function() {

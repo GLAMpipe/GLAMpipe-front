@@ -1,20 +1,40 @@
-
+<style scoped>
+.pointer {
+  cursor: pointer;
+}
+</style>
 
 <template>
-	<div id="nodesettings" ref="nodesettings">
-		<div v-html="$G.current_node.views.settings">
-		</div>
-	</div>
+	<b-card v-if="$G.current_node" header-bg-variant="info" header-text-variant="white" header="Info">
+		<template #header>
+			<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">Settings for Node {{$G.current_node.title}}
+			<span @click="deleteNode" class="float-right" title="delete node"><b-icon icon="trash"></b-icon></span>
+		</h6>
+		</template>
+		<b-card-body style="padding:0.25rem" text-variant="info">
+			<b-card-sub-title class="mb-2">{{$G.current_node.description}}</b-card-sub-title>
+			<b-tabs v-if="showNodeSettings" content-class="mt-3" >
+				<b-tab title="Settings" active>
+					<GPnodeSettings></GPnodeSettings>
+				</b-tab>
+
+				<b-tab title="Parameters (read only)">
+					{{$G.current_node.params}}
+				</b-tab>
+			</b-tabs>
+		</b-card-body>
+	</b-card>
 
 </template>
 
 <script>
-//import axios from "axios"
+import GPnodeSettings from './GPnodeSettings.vue'
+import axios from "axios"
 import $ from 'jquery'
 
 export default {
-	name: 'GPnodeSettings',
-
+	name: 'GPnodeRun',
+	components: {GPnodeSettings},
 	data() {
 		return {
 			showNodeSettings: true,
@@ -24,7 +44,9 @@ export default {
 	watch: {
 		'$G.current_node':function() {
 			if(this.$G.current_node) {
-				console.log('node settings vaihtui')
+				console.log('node vaihtui')
+
+
 			//	var options = ['<option>kissa</option>', '<option>koira</option>']
 			//	$("settingsblock select.dynamic-field").each(function() {
 			//		$(this).append(options.join(""))
@@ -54,14 +76,20 @@ export default {
 			console.log('ei')
 			});
 			*/
+		},
+		async deleteNode() {
+			console.log(this.$G.current_node.title)
+			try {
+				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
+				this.$G.current_node = null
+			} catch(e) {
+				console.log(e)
+			}
 		}
 	},
 
 	created: function() {
 			//this.loadProject();
-	},
-	updated: function() {
-		console.log('update')
 	}
 }
 </script>

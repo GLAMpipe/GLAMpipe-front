@@ -52,6 +52,7 @@ var shared = new Vue({
 		error: null,
 		user: null,
 		current_project: null,
+		current_collection: null,
 		current_node: null,
 		showSideBar: true
 	},

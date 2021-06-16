@@ -4,11 +4,23 @@
 }
 .active_node {
 	background-color: #e4e8e3;
+
 }
 .bg-info {
 	background:none !important;
 	color:black
 }
+.card {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+.card-body {
+	padding:0.6rem;
+}
+.navbar-toggler {
+	font-size:1.0rem;
+}
+
 
 </style>
 
@@ -16,17 +28,22 @@
 	<div class="project-sidebar" v-show="showSideBar">
 
 		<!-- // COLLECTION LIST -->
-		<div id="collection-nav" v-if="project && current_collection">
+		<div id="collection-nav" v-if="$G.current_project && $G.current_collection">
 			<b-navbar toggleable="m" >
-				<span @click="$G.showSideBar = !$G.showSideBar">hide</span>
-				<b-navbar-brand href="#">{{current_collection.title}}</b-navbar-brand>
-				<b-navbar-toggle target="nav-collapse" ></b-navbar-toggle>
+				<span @click="$G.showSideBar = !$G.showSideBar">
+					<b-icon icon="caret-left"></b-icon>
+				</span>
 
-				<b-collapse id="nav-collapse" is-nav>
-					<b-navbar-nav class="ml-auto" v-for="(collection, index) in project.collections" :key="index">
-						<b-nav-item @click="$router.push({ path: '/projects/' + project._id + '/collection/' + collection.name })">{{collection.title}}</b-nav-item>
-					</b-navbar-nav>
-				</b-collapse>
+				<b-navbar-brand>Nodes for
+					<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
+					<b-collapse id="nav-collapse" is-nav>
+						<b-navbar-nav class="ml-auto" v-for="collection in $G.current_project.collections" :key="collection.name">
+							<b-nav-item @click="$router.push({ path: '/projects/' + $G.current_project._id + '/collection/' + collection.name })">{{collection.title}}</b-nav-item>
+						</b-navbar-nav>
+					</b-collapse>
+				</b-navbar-brand>
+
+
 			</b-navbar>
 		</div>
 		<div v-else>
@@ -35,49 +52,118 @@
 
 
 		<!-- // NODE LIST -->
-		<div id="node-nav" v-if="project && nodes_sorted">
-			<div v-for="type in nodetypes" :key="type">
-				<div style="margin-top:15px"><h5>{{type.label}}  <b-link>add</b-link></h5></div>
-				<b-card :class = "$G.current_node && $G.current_node._id == node._id?'active_node':'else_class'"  v-for="(node, index) in nodes_sorted[type.key]" :key="`${type.key}-${index}`" header="Info">
-					<template #header>
-						<h6 @click="setCurrentNode(node)" class="mb-0 pointer">{{node.title}}</h6>
-					</template>
-					<b-card-body style="padding:0.25rem" text-variant="info">
-						<!--<b-card-title>{{node.title}}</b-card-title>-->
-						<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
-						<b-card-text>
+		<div id="node-nav" v-if="$G.current_project">
+			<div v-for="type in nodetypes" :key="type.key">
+				<div style="margin-top:15px"><h6 small>{{type.label}}
 
-						</b-card-text>
-					</b-card-body>
-				</b-card>
+					<!-- ADD NODE DIALOG -->
+					<b-navbar-toggle :target="`${type.key}`">
+						<b-link>
+							<b-icon icon="plus-circle"></b-icon>
+						</b-link>
+					</b-navbar-toggle></h6>
+
+					<b-collapse :id="`${type.key}`"  is-nav style="margin-bottom:2em">
+						<b-list-group>
+							<b-list-group-item   v-for="(title, subtype) in verbose[type.key]" :key="title">
+								<b-navbar-toggle :target="`${type.key}-${subtype}`">{{title}}</b-navbar-toggle>
+								<b-collapse :id="`${type.key}-${subtype}`"  is-nav style="margin-bottom:2em">
+									<div>
+										<template v-for="rnode in repository">
+											<b-card v-if="rnode.type == type.key && rnode.subtype == subtype" :key="rnode._id">
+												<b-link @click="current_repo_node = rnode; showAddNode = true">{{rnode.title}}</b-link>
+												<p>{{rnode.description}}</p>
+											</b-card>
+										</template>
+									</div>
+								</b-collapse>
+							</b-list-group-item>
+						</b-list-group>
+					</b-collapse>
+				</div>
+
+				<!-- LIST OF EXISTING NODES -->
+				<template v-if="nodes_sorted">
+					<b-card @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
+						<template #header>
+							<h6  class="mb-0 ">{{node.title}}</h6>
+						</template>
+						<b-card-body style="padding:0.25rem" text-variant="info">
+							<!--<b-card-title>{{node.title}}</b-card-title>-->
+							<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
+							<b-card-text>
+
+							</b-card-text>
+						</b-card-body>
+					</b-card>
+				</template>
 			</div>
 		</div>
+
+		<b-modal
+			v-if="current_repo_node"
+			v-model="showAddNode"
+			:title="current_repo_node.title"
+			header-bg-variant="info"
+			okTitle="Create node"
+			@ok="createNode">
+			<div >
+				<p>{{current_repo_node.description}}</p>
+				<h5>Node parameters</h5>
+				<div id="node-parameters" v-html="current_repo_node.views.params"></div>
+			</div>
+		</b-modal>
+
   </div>
 </template>
 
 <script>
 import axios from "axios"
+import $ from 'jquery'
 
 export default {
 	name: 'GPProjectSidebar',
-	props: {
-		current_collection: Object,
-
-	},
 	data() {
 		return {
 			showSideBar: true,
-			project: null,
+			showAddNode: false,
 			nodes: null,
 			current_node: null,
+			current_subtype: null,
+			current_repo_node: null,
+			params_html: '',
 			nodes_sorted: null,
+			repository: [],
 			nodetypes: [
 				{key:'source', label:'Read data'},
 				{key:'process', label:'Process the data'},
 				{key:'export', label:'Write the data'},
 				{key:'view', label:'View the data'}
 			],
-			fields: ['title', { key: 'nameage', label: 'First name and age' }]
+			subtypes: {},
+			verbose: {
+				"source": {
+					"collection": "Read data from collection",
+					"web": "Read data from web",
+					"file": "Read data from file"
+				},
+				"process": {
+					"strings": "String operations",
+					"documents": "Modify whole records",
+					"format": "Format/Map data",
+					"collection": "Manage collection",
+					"files": "File operations",
+					"lookups": "Look up data",
+					"pipe": "Series of operations",
+				},
+				"export": {
+					"file": "Export data to file",
+					"web": "Export data to web"
+				},
+				"view": {
+					"data": "View data"
+				}
+			}
 		}
 	},
 
@@ -94,15 +180,41 @@ export default {
 	methods: {
 		async loadProject() {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
-			this.project = response.data
+			this.$G.current_project = response.data
 			if(this.$route.params.collection) this.setCurrentCollection() //
-			else if(this.project.collections[0]) this.$router.push({ path: '/projects/' + this.project._id + '/collection/' + this.project.collections[0].name })
+			else if(this.$G.current_project.collections[0]) this.$router.push({ path: '/projects/' + this.$G.current_project._id + '/collection/' + this.$G.current_project.collections[0].name })
 			//if(this.project.collections[0) $router.push()
 		},
 		async loadNodes() {
 			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/nodes`)
 			this.nodes = response.data.nodes
 			this.sortNodes()
+
+		},
+		async createNode() {
+			$("#node-parameters input").each(function() {
+				console.log($(this).val())
+			})
+			var node_init = {
+				nodeid: this.current_repo_node.nodeid,
+				project: this.$G.current_project._id,
+				collection: this.$G.current_collection.name,
+				params: {}
+			}
+			var node_result = await axios.post('/api/v2/nodes', node_init)
+			console.log(node_result)
+
+			// we need to create form for file import (upload)
+			if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
+				let file = document.getElementById('file').files[0]
+				let formData = new FormData();
+				formData.append('file', file)
+				var result = await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
+				console.log(result)
+			}
+
+			//let formData = new FormData();
+			console.log(this.current_repo_node.title)
 
 		},
 		sortNodes() {
@@ -113,13 +225,13 @@ export default {
 			}
 		},
 		setCurrentCollection() {
-			var collection = this.project.collections.find(col => col.name == this.$route.params.collection)
-			if(!this.current_collection) {
-				this.current_collection = collection
+			var collection = this.$G.current_project.collections.find(col => col.name == this.$route.params.collection)
+			if(!this.$G.current_collection) {
+				this.$G.current_collection = collection
 				this.loadNodes()
 			}
-			if(this.current_collection && this.current_collection.name != collection.name) {
-				this.current_collection = collection
+			if(this.$G.current_collection && this.$G.current_collection.name != collection.name) {
+				this.$G.current_collection = collection
 				this.loadNodes()
 			}
 			//this.$emit('update:current_collection', collection)
@@ -133,11 +245,18 @@ export default {
 		},
 		parseSettingsHTML() {
 			this.$G.current_node.views.settings = "<input id='testi'/>"
+		},
+		async getNodesFromRepository() {
+			var response = await axios(`/api/v2/repository/nodes`)
+			this.repository = response.data.data
+
+
 		}
 	},
 
 	created: function() {
 			this.loadProject();
+			this.getNodesFromRepository()
 	}
 }
 </script>

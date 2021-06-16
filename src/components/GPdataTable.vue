@@ -166,10 +166,10 @@ settinglistcontainer label {
 </style>
 
 <template>
-	<div v-if="data">
+	<b-container fluid v-if="data">
 
 		<b-navbar toggleable="m" >
-			<b-navbar-brand href="#"></b-navbar-brand>
+			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
 
 			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
 			<b-navbar-toggle target="nav-table"></b-navbar-toggle>
@@ -212,31 +212,30 @@ settinglistcontainer label {
 		<!-- DATA TABLE -->
 		<b-table small striped :items="data.data" :fields="selected"></b-table>
 
-	</div>
+	</b-container>
 
 </template>
 
 <script>
 
 import axios from "axios"
-import $ from 'jquery'
 
 export default {
 	name: 'GPdataTable',
 	data() {
 		return {
 			node_settings:{},
+			collection: '',
 			data: null,
 			schema: null,
-			pageCount: 0,
+			pageCount: 1,
 			dataStart: 0,
 			dataLimit: 15,
 			selected: [],
 			fields: [],
 			query_keys: [],
 			query_types: [],
-			query_type_list: ['is exactly', 'contains'],
-			settings_html: "<input name='pp'></input><h2>koe</h2>"
+			query_type_list: ['is exactly', 'contains']
 		}
 	},
 
@@ -257,6 +256,8 @@ export default {
 
 	methods: {
 		async loadData() {
+			if(this.collection != this.$route.params.collection) await this.loadSchema()
+			this.collection = this.$route.params.collection
 			console.log('loadin data' + this.selected.length)
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit
 			else this.dataStart = 0
@@ -264,6 +265,7 @@ export default {
 			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}`)
 			this.data = response.data
 			this.pageCount = Math.floor(this.data.total/this.dataLimit)
+			if(this.pageCount === 0) this.pageCount = 1
 		},
 		async loadSchema() {
 			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/schema`)
@@ -273,14 +275,12 @@ export default {
 				this.loadSchema()
 		},
 		async getVisibleFields() {
-			if(this.selected.length != 0) return
 			if(this.$route.query.fields) {
-				this.selected =  this.$route.query.fields.split(',')
-			} else if(this.schema && this.schema.keys) {
-				this.selected = this.schema.keys.slice(0,5)
+				var routefields = this.$route.query.fields.split(',')
+				this.selected =  routefields.filter(key => this.schema.keys.includes(key)) // key must be in schema
 			} else {
-				await this.loadSchema()
-				this.selected = this.schema.keys.slice(0,5)
+				var fields = this.schema.keys.filter(key => key != '_id' && key != '__gp_source')
+				this.selected = fields.slice(0,5)
 			}
 		},
 		async setUserFields() {
@@ -294,7 +294,7 @@ export default {
 	created: function() {
 			this.loadData();
 
-			$(document).on('click', 'setting input', function(){console.log($(this).val())});
+			//$(document).on('click', 'setting input', function(){console.log($(this).val())});
 			//this.loadSchema()
 	}
 }
