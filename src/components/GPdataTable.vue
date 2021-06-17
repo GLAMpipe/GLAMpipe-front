@@ -170,24 +170,22 @@ settinglistcontainer label {
 
 		<b-navbar toggleable="m" >
 			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
-
 			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
-			<b-navbar-toggle target="nav-table"></b-navbar-toggle>
+
+			<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
 
 			<b-collapse id="nav-table" is-nav @shown="populateTabs">
 				<b-tabs content-class="mt-3" >
 
 					<b-tab title="Fields" active>
 						<b-container v-if="schema" class="bv-example-row mb-3">
-							<b-button @click="selected = []">uncheck all</b-button>
-							<b-row cols="5">
+							<b-button @click="uncheck">uncheck all</b-button>
+							<b-row cols="3">
 								<template v-for="key in schema.keys"  >
 									<b-col :key="key"><b-form-checkbox  v-model="selected" :value="key">{{key}}</b-form-checkbox></b-col>
 								</template>
-
 							</b-row>
 						</b-container>
-
 					</b-tab>
 
 					<b-tab title="Filter">
@@ -201,16 +199,12 @@ settinglistcontainer label {
 						<b-col><b-form-input/></b-col>
 						</b-row>
 					</b-tab>
-
-
 				</b-tabs>
-
-
 			</b-collapse>
 		</b-navbar>
 
 		<!-- DATA TABLE -->
-		<b-table small striped :items="data.data" :fields="selected"></b-table>
+		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="fields" @sort-changed="sortingChanged"></b-table>
 
 	</b-container>
 
@@ -242,6 +236,7 @@ export default {
 	watch: {
 		selected() {
 			this.$router.replace({path: this.$router.currentRoute.path, query: {page: this.$route.query.page, fields: this.selected.join(',')}})
+			this.fields = this.selected.map(key => {return {'key':key, 'label':key, 'sortable': true}})
 			this.setUserFields()
 
 		},
@@ -255,25 +250,30 @@ export default {
 	},
 
 	methods: {
-		async loadData() {
+		async loadData(sort) {
+			var sort_str = ''
+			if(sort) sort_str = `&sort=${sort.sortBy}&reverse=${sort.sortDesc ? '0':'1'}`
 			if(this.collection != this.$route.params.collection) await this.loadSchema()
 			this.collection = this.$route.params.collection
 			console.log('loadin data' + this.selected.length)
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit
 			else this.dataStart = 0
 			await this.getVisibleFields()
-			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}`)
+			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}${sort_str}`)
 			this.data = response.data
 			this.pageCount = Math.floor(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
 		},
+
 		async loadSchema() {
 			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/schema`)
 			this.schema = response.data
 		},
+
 		async populateTabs() {
 				this.loadSchema()
 		},
+
 		async getVisibleFields() {
 			if(this.$route.query.fields) {
 				var routefields = this.$route.query.fields.split(',')
@@ -281,13 +281,21 @@ export default {
 			} else {
 				var fields = this.schema.keys.filter(key => key != '_id' && key != '__gp_source')
 				this.selected = fields.slice(0,5)
+				//this.selected = f.map(key => { return {'label':key, 'key':key}})
 			}
 		},
+
 		async setUserFields() {
 			await axios.put(`/api/v2/user/fields`, {collection: this.$route.params.collection, fields: this.selected})
 		},
 		linkGen(pageNum) {
 			return pageNum === 1 ? '?' : `?page=${pageNum}`
+		},
+		uncheck() {
+			this.selected = []
+		},
+		sortingChanged(data) {
+			this.loadData(data)
 		}
 	},
 

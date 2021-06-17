@@ -37,17 +37,26 @@
 				<b-navbar-brand>Nodes for
 					<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
 					<b-collapse id="nav-collapse" is-nav>
-						<b-navbar-nav class="ml-auto" v-for="collection in $G.current_project.collections" :key="collection.name">
-							<b-nav-item @click="$router.push({ path: '/projects/' + $G.current_project._id + '/collection/' + collection.name })">{{collection.title}}</b-nav-item>
+						<b-navbar-nav class="ml-auto" >
+							<b-nav-item
+								v-for="collection in $G.current_project.collections"
+								:key="collection.name"
+								@click="$router.push({ path: '/projects/' + $G.current_project._id + '/collection/' + collection.name })">
+								<b-badge>{{collection.title}}</b-badge>
+							</b-nav-item>
 						</b-navbar-nav>
+						<b-link @click="showAddCollection = !showAddCollection">
+							<b-icon variant="info" icon="plus-circle-fill"></b-icon>
+						</b-link>
 					</b-collapse>
+
 				</b-navbar-brand>
 
 
 			</b-navbar>
 		</div>
 		<div v-else>
-			No collections yet. <b-button>create collection</b-button>
+			No collections yet. <b-button @click="showAddCollection" >create collection</b-button>
 		</div>
 
 
@@ -100,9 +109,23 @@
 			</div>
 		</div>
 
+		<!-- ADD COLLECTION MODAL -->
+		<b-modal
+			v-model="showAddCollection"
+			title="Add collection"
+			header-bg-variant="info"
+			okTitle="Create"
+			@ok="createCollection">
+			<div >
+				<b-input placeholder="collection title" v-model="new_collection"/>
+			</div>
+		</b-modal>
+
+		<!-- ADD NODED MODAL -->
 		<b-modal
 			v-if="current_repo_node"
 			v-model="showAddNode"
+			@shown="initNodeParams"
 			:title="current_repo_node.title"
 			header-bg-variant="info"
 			okTitle="Create node"
@@ -111,6 +134,7 @@
 				<p>{{current_repo_node.description}}</p>
 				<h5>Node parameters</h5>
 				<div id="node-parameters" v-html="current_repo_node.views.params"></div>
+				<!--<div id="node-parameters">params... here</div>-->
 			</div>
 		</b-modal>
 
@@ -127,6 +151,9 @@ export default {
 		return {
 			showSideBar: true,
 			showAddNode: false,
+			showAddCollection: false,
+			new_collection: '',
+			initAddNode: false,
 			nodes: null,
 			current_node: null,
 			current_subtype: null,
@@ -178,19 +205,28 @@ export default {
 	},
 
 	methods: {
+		async initNodeParams() {
+			let removeCurrent = (collection) => collection.name !== this.$G.current_collection.name ? this.$G.current_collection.name : null
+			let createOptions = (option) => '<option>' + option.title + '</option>'
+			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
+			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
+		},
+
 		async loadProject() {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
 			this.$G.current_project = response.data
 			if(this.$route.params.collection) this.setCurrentCollection() //
-			else if(this.$G.current_project.collections[0]) this.$router.push({ path: '/projects/' + this.$G.current_project._id + '/collection/' + this.$G.current_project.collections[0].name })
+			else if(this.$G.current_project.collections[0]) this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + this.$G.current_project.collections[0].name })
 			//if(this.project.collections[0) $router.push()
 		},
+
 		async loadNodes() {
 			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/nodes`)
 			this.nodes = response.data.nodes
 			this.sortNodes()
 
 		},
+
 		async createNode() {
 			$("#node-parameters input").each(function() {
 				console.log($(this).val())
@@ -217,6 +253,17 @@ export default {
 			console.log(this.current_repo_node.title)
 
 		},
+
+		async createCollection() {
+			var collection_init = {
+				project: this.$G.current_project._id,
+				title: this.new_collection
+			}
+			var col_result = await axios.post('/api/v2/collections', collection_init)
+			console.log(col_result)
+			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + col_result.data.id })
+		},
+
 		sortNodes() {
 			this.nodes_sorted = {}
 			for(var node of this.nodes) {
@@ -224,6 +271,7 @@ export default {
 				else this.nodes_sorted[node.type] = [node]
 			}
 		},
+
 		setCurrentCollection() {
 			var collection = this.$G.current_project.collections.find(col => col.name == this.$route.params.collection)
 			if(!this.$G.current_collection) {
@@ -234,8 +282,8 @@ export default {
 				this.$G.current_collection = collection
 				this.loadNodes()
 			}
-			//this.$emit('update:current_collection', collection)
 		},
+
 		setCurrentNode(node) {
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null

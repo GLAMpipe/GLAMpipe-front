@@ -1,4 +1,4 @@
-<style scoped>
+<style >
 .dim {
 	color:#8e978e;
 }
@@ -16,7 +16,7 @@
 				<div class="font-italic">{{data.item.description}}</div>
 			</template>
 			<template #cell(remove)="data">
-				<b-icon-trash variant="danger" @click="openDeleteDialog(data.item)">poista</b-icon-trash>
+				<b-icon-trash class="pointer" variant="danger" @click="openDeleteDialog(data.item)">poista</b-icon-trash>
 			</template>
 			<template #cell(star)="data">
 
@@ -25,10 +25,19 @@
 			</template>
 		</b-table>
 
-		<b-modal v-model="showDelete">
-			<div v-if="selected">
-				Delete {{selected.title}}?
-				<b-icon-trash variant="danger" @click="deleteProject(selected._id)"></b-icon-trash>
+		<b-modal
+			v-model="showDelete"
+			v-if="selected_for_delete"
+			@ok="deleteProject"
+			okTitle="Delete"
+			ok-variant="danger"
+			header-bg-variant="info"
+			title="Confirm delete">
+			<div>
+
+				<div class="alert alert-danger">
+					<p><b-icon-trash variant="danger"></b-icon-trash> Delete <b>{{selected_for_delete.title}}</b>?</p>
+					<p>Removes ALL data and nodes</p></div>
 			</div>
 		</b-modal>
   </div>
@@ -42,7 +51,7 @@ export default {
 	data() {
 		return {
 			projects: null,
-			selected: null,
+			selected_for_delete: null,
 			showDelete: false,
 			fields: [
 				{ key: 'star', label: 'starred' },
@@ -67,12 +76,13 @@ export default {
 			await axios.put(`/api/v2/projects/${id}`, {star:'zzz'})
 			this.loadData()
 		},
-		async deleteProject(id) {
-			await axios.delete(`/api/v2/projects/${id}`)
+		async deleteProject() {
+			await axios.delete(`/api/v2/projects/${this.selected_for_delete._id}`)
+			this.selected_for_delete = null
 			this.loadData()
 		},
-		openDeleteDialog(id) {
-				this.selected = id
+		openDeleteDialog(project) {
+				this.selected_for_delete = project
 				this.showDelete = !this.showDelete
 		}
 	},

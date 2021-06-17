@@ -10,7 +10,7 @@
 			<b-link :to="{ path: '/'}"><b-navbar-brand >GLAMpipe </b-navbar-brand></b-link>
 
 			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:20%"><span ><b> {{$G.current_project.title}}</b></span></b-navbar-brand>
-			<b-navbar-brand v-if="$G.current_collection" style="font-size:1.0rem; margin-left:120px">Collection: <span ><b> {{$G.current_collection.title}}</b></span></b-navbar-brand>
+			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:10px"><span ><i>{{$G.current_project.description}}</i></span></b-navbar-brand>
 
 		</b-navbar>
 
