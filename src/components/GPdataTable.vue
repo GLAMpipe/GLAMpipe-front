@@ -203,6 +203,9 @@ settinglistcontainer label {
 			</b-collapse>
 		</b-navbar>
 
+		<div v-if="data && data.total == 0" class="alert alert-info">No documents found! <br>
+			<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.</div>
+
 		<!-- DATA TABLE -->
 		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="fields" @sort-changed="sortingChanged"></b-table>
 

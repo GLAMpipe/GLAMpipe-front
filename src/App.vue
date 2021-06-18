@@ -1,6 +1,6 @@
 <style>
 .bg-info {
-    background-color: #677eaa !important;
+    background-color: #637995 !important;
 }
 </style>
 <template>

@@ -205,12 +205,6 @@ export default {
 	},
 
 	methods: {
-		async initNodeParams() {
-			let removeCurrent = (collection) => collection.name !== this.$G.current_collection.name ? this.$G.current_collection.name : null
-			let createOptions = (option) => '<option>' + option.title + '</option>'
-			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
-			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
-		},
 
 		async loadProject() {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
@@ -227,31 +221,61 @@ export default {
 
 		},
 
+		async initNodeParams() {
+			let removeCurrent = (collection) => collection.name !== this.$G.current_collection.name ? this.$G.current_collection.name : null
+			let createOptions = (option) => '<option>' + option.title + '</option>'
+			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
+			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
+			$('#node-parameters').append('<p class="alert alert-info">Please note that node parameters can NOT be changed after the node is created</div>')
+
+			// set params UI script
+			if(this.current_repo_node && this.current_repo_node.scripts.ui_params) {
+				var settingsScript = new Function('node', '$', 'g_apipath', this.current_repo_node.scripts.ui_params);
+				settingsScript(this.current_repo_node, $, 'http://localhost:8080/api/v2');
+			} else {
+				$('#node-parameters').append('<br>no params script')
+			}
+		},
+
 		async createNode() {
 			$("#node-parameters input").each(function() {
 				console.log($(this).val())
 			})
+			// read params with jquery
+			var params = {}
+			$('#node-parameters').find("input.node-params, textarea.node-params, select.node-params").each(function(){
+				if($(this).attr("type") == "checkbox") {
+					if($(this).is(':checked'))
+						params[$(this).attr("name")] = "on";
+				} else {
+					params[$(this).attr("name")] = $(this).val();
+				}
+			})
+
 			var node_init = {
 				nodeid: this.current_repo_node.nodeid,
 				project: this.$G.current_project._id,
 				collection: this.$G.current_collection.name,
-				params: {}
-			}
-			var node_result = await axios.post('/api/v2/nodes', node_init)
-			console.log(node_result)
-
-			// we need to create form for file import (upload)
-			if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
-				let file = document.getElementById('file').files[0]
-				let formData = new FormData();
-				formData.append('file', file)
-				var result = await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
-				console.log(result)
+				params: params
 			}
 
-			//let formData = new FormData();
-			console.log(this.current_repo_node.title)
+			try {
+				var node_result = await axios.post('/api/v2/nodes', node_init)
+				console.log(node_result)
 
+				// we need to create form for file import (upload)
+				if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
+					let file = document.getElementById('file').files[0]
+					let formData = new FormData();
+					formData.append('file', file)
+					var result = await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
+					console.log(result)
+				}
+				//this.loadNodes()
+				location.reload()
+			} catch(e) {
+				alert('Node creation failed ' + e)
+			}
 		},
 
 		async createCollection() {

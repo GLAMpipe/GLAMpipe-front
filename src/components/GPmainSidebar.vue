@@ -31,12 +31,21 @@ export default {
 
 	methods: {
 		async createProject() {
-			var response = await axios.post("/api/v2/projects", {
-				title: this.title,
-				description: this.description,
-				collection: this.collection,
-				star:'zzz'})
-			console.log(response)
+			try {
+				if(this.collection == '') this.collection = 'my data'
+				var result = await axios.post("/api/v2/projects", {
+					title: this.title,
+					description: this.description,
+					collection: this.collection,
+					star:'zzz'
+				})
+				this.title = ''
+				this.description = ''
+				this.collection = ''
+				this.$router.push({ path: '/projects/' + result.data._id})
+			} catch(e) {
+				alert(e)
+			}
 		}
 	}
 }

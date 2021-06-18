@@ -7,8 +7,7 @@
 <template>
 	<b-card v-if="$G.current_node" header-bg-variant="info" header-text-variant="white" header="Info">
 		<template #header>
-			<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">Settings for Node {{$G.current_node.title}}
-			<span @click="deleteNode" class="float-right" title="delete node"><b-icon icon="trash"></b-icon></span>
+			<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">Settings for Node <b>{{$G.current_node.title}}</b>
 		</h6>
 		</template>
 		<b-card-body style="padding:0.25rem" text-variant="info">
@@ -19,9 +18,19 @@
 				</b-tab>
 
 				<b-tab title="Parameters (read only)">
-					{{$G.current_node.params}}
+					<table class="table b-table">
+						<tr v-for="(v,i) in $G.current_node.params" :key="v">
+							<td>{{i}}</td><td><b>{{v}}</b></td>
+						</tr>
+					</table>
+				</b-tab>
+
+				<b-tab title="Delete">
+					<div class="alert alert-warning">When you delete a node, also fields created by that node are deleted.</div>
+					<span @click="deleteNode" title="delete node"><b-badge variant="danger"><b-icon icon="trash"></b-icon> delete</b-badge></span>
 				</b-tab>
 			</b-tabs>
+
 		</b-card-body>
 	</b-card>
 
