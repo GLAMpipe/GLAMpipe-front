@@ -166,12 +166,22 @@ settinglistcontainer label {
 </style>
 
 <template>
-	<b-container fluid v-if="data">
+	<b-container fluid v-if="data && $G.current_collection">
 
+		<b-button @click="$store.dispatch('visible',['title'])">koe</b-button>
+		<div>
+		  <b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button>
+		  <b-sidebar id="sidebar-1" title="Debug" shadow>
+			<div class="px-3 py-2">
+			  <p>
+				  {{$store.state.visible}}
+			  </p>
+			</div>
+		  </b-sidebar>
+		</div>
 		<b-navbar toggleable="m" >
 			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
 			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
-
 			<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
 
 			<b-collapse id="nav-table" is-nav @shown="populateTabs">
@@ -179,7 +189,7 @@ settinglistcontainer label {
 
 					<b-tab title="Fields" active>
 						<b-container v-if="schema" class="bv-example-row mb-3">
-							<b-button @click="uncheck">uncheck all</b-button>
+							<b-button @click="uncheck()">uncheck all</b-button>
 							<b-row cols="3">
 								<template v-for="key in schema.keys"  >
 									<b-col :key="key"><b-form-checkbox  v-model="selected" :value="key">{{key}}</b-form-checkbox></b-col>
@@ -204,10 +214,15 @@ settinglistcontainer label {
 		</b-navbar>
 
 		<div v-if="data && data.total == 0" class="alert alert-info">No documents found! <br>
-			<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.</div>
+			<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
+		</div>
 
 		<!-- DATA TABLE -->
-		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="fields" @sort-changed="sortingChanged"></b-table>
+		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="fields" @sort-changed="sortingChanged">
+			<template #cell()="data">
+				<div v-html="renderCell(data.value)"></div>
+			</template>
+		</b-table>
 
 	</b-container>
 
@@ -221,6 +236,7 @@ export default {
 	name: 'GPdataTable',
 	data() {
 		return {
+			initted: false,
 			node_settings:{},
 			collection: '',
 			data: null,
@@ -229,23 +245,44 @@ export default {
 			dataStart: 0,
 			dataLimit: 15,
 			selected: [],
+			sort: null,
 			fields: [],
 			query_keys: [],
 			query_types: [],
-			query_type_list: ['is exactly', 'contains']
+			query_type_list: ['is exactly', 'contains'],
+			maxArrayLenghtDisplay: 10
 		}
 	},
 
+	computed: {
+		visible() {
+			return this.$store.state.visible
+		}
+	},
 	watch: {
-		selected() {
-			this.$router.replace({path: this.$router.currentRoute.path, query: {page: this.$route.query.page, fields: this.selected.join(',')}})
-			this.fields = this.selected.map(key => {return {'key':key, 'label':key, 'sortable': true}})
-			this.setUserFields()
-
-		},
-		$route() {
-			if(this.$route.params.collection) {
+		visible() {
+				console.log('visible muutti')
+				this.selected = this.visible.map(key => { return {'label':key, 'key':key}})
 				this.loadData()
+		},
+
+		//selected() {
+
+		//	this.fields = this.selected.map(key => {return {'key':key, 'label':key, 'sortable': true}})
+			//this.setUserFields()
+			//this.loadData()
+
+		//},
+
+		$route() {
+			console.log('route vaihtui table-watch')
+			if(this.$route.query.collection) {
+				if(this.collection != this.$route.query.collection) {
+					this.selected = []
+					this.initted = false
+				} else {
+					this.loadData()
+				}
 			} else {
 				this.current = null
 			}
@@ -253,60 +290,152 @@ export default {
 	},
 
 	methods: {
-		async loadData(sort) {
+		async loadData() {
 			var sort_str = ''
-			if(sort) sort_str = `&sort=${sort.sortBy}&reverse=${sort.sortDesc ? '0':'1'}`
-			if(this.collection != this.$route.params.collection) await this.loadSchema()
-			this.collection = this.$route.params.collection
-			console.log('loadin data' + this.selected.length)
+			if(this.sort) sort_str = `&sort=${this.sort.sortBy}&reverse=${this.sort.sortDesc ? '0':'1'}`
+			// did collection change?
+			if(this.collection != this.$route.query.collection) {
+				await this.loadSchema()
+			}
+			this.collection = this.$route.query.collection
+			console.log('loadin data ' + this.selected.length)
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit
 			else this.dataStart = 0
-			await this.getVisibleFields()
-			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}${sort_str}`)
+			//this.getVisibleFields()
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}${sort_str}`)
 			this.data = response.data
 			this.pageCount = Math.floor(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
+			this.initted = true
 		},
 
 		async loadSchema() {
-			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/schema`)
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/schema`)
 			this.schema = response.data
+		},
+
+		renderCell(data, index, className='', key=0) {
+			var html = "";
+			if(data == null)
+				return "<div></div>";
+
+			// if in edit mode, then add "edit" class
+			if(this.editMode)
+				className += " edit";
+
+			// render arrays recursively
+			if (Array.isArray(data)) {
+				for(var i = 0; i < data.length; i++) {
+					//if(index === null)
+					if(Array.isArray(data[i]))
+						html += "<div data-index='" + i + "' class='object-cell'>["+i+"] array</div>"
+					else
+						html += this.renderCell(data[i], i, className, key);
+				}
+
+			// render string, numbers and nulls
+			} else if (typeof data == "string" || typeof data == "number" || data === null) {
+				// render urls as links
+				if(typeof data == "string" && data.match(/^http/) && !this.editMode) {
+					if(index === 0 || index)
+						html += "<div class='"+className+"'>["+index+"]<a target='_blank' href='"+data+"'>" + data + "</a></div>";
+					else
+						html += "<div class='"+className+"'><a target='_blank' href='"+data+"'>" + data + "</a></div>";
+
+				// render errors
+				} else if(typeof data == "string" && data.match("^AAAA_error")) {
+					data = data.replace("AAAA_error:","");
+					if(index != null)
+						html += "<div class='error'>["+index+"] " + this.nl2br(data) + "</div>";
+					else
+						html += "<div class='error'>" + this.nl2br(data) + "</div>";
+
+				} else if(typeof data == "number") {
+					if(index != null)
+						html += "<div class='error'>["+index+"] " + data + "</div>";
+					else
+						html += "<div class='error'>" + data + "</div>";
+
+
+				// render strings
+				} else  {
+					if(index != null)
+						html += "<div class='"+className+"'>["+index+"] " + this.nl2br(data, key) + "</div>";
+					else
+						html += "<div class='"+className+"'>" + this.nl2br(data, key) + "</div>";
+				}
+
+			// render objects
+			}  else {
+				if(index != null)
+					html += "<div data-index="+index+" class='object-cell'>["+index+"] subdocument</div>";
+				else
+					html += "<div class='object-cell'>subdocument</div><div class='object-string'>as string</div>";
+			}
+			return html;
 		},
 
 		async populateTabs() {
 				this.loadSchema()
 		},
 
-		async getVisibleFields() {
-			if(this.$route.query.fields) {
-				var routefields = this.$route.query.fields.split(',')
-				this.selected =  routefields.filter(key => this.schema.keys.includes(key)) // key must be in schema
-			} else {
-				var fields = this.schema.keys.filter(key => key != '_id' && key != '__gp_source')
-				this.selected = fields.slice(0,5)
-				//this.selected = f.map(key => { return {'label':key, 'key':key}})
-			}
+		defaultField(field) {
+			if(field.includes('title')) return field
+			if(field.includes('author')) return field
+			if(field.includes('year')) return field
+			if(field.includes('issued')) return field
+			if(field.includes('date')) return field
+			if(field.includes('pvm')) return field
+			return false
 		},
 
 		async setUserFields() {
-			await axios.put(`/api/v2/user/fields`, {collection: this.$route.params.collection, fields: this.selected})
+			console.log('do not update')
+			//await axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: this.selected})
 		},
 		linkGen(pageNum) {
-			return pageNum === 1 ? '?' : `?page=${pageNum}`
+			return pageNum === 1 ? `?collection=${this.$route.query.collection}` : `?collection=${this.$route.query.collection}&page=${pageNum}`
 		},
 		uncheck() {
-			this.selected = []
+			this.selected = ['_id']
 		},
 		sortingChanged(data) {
-			this.loadData(data)
+			this.sort = data
+			this.loadData()
+		},
+		nl2br(str, keyname) {
+			if(typeof str === "string") {
+				if(keyname !== "thumbnail_html") {
+					str = str.replace(/</g, "&lt;");
+					str = str.replace(/>/g, "&gt;");
+				}
+				if(str.length > 1000)
+					str = str.substring(0,1000) + "...<br><a class='expand' href='#'>show (not implemented)</a>\n\n";
+				var breakTag = "<br />";
+				return (str + "").replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
+			} else {
+				return "";
+			}
 		}
 	},
 
-	created: function() {
-			this.loadData();
+	created: async function() {
 
-			//$(document).on('click', 'setting input', function(){console.log($(this).val())});
-			//this.loadSchema()
+		if(this.$route.query.collection) {
+			this.collection = this.$route.query.collection
+			await this.loadSchema()
+
+			if(this.$store.getters.getVisibleFields(this.collection)) {
+			 	var fields =  this.$store.getters.getVisibleFields(this.collection).fields
+				this.$store.dispatch('visible', fields)
+			} else {
+				var fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
+				this.$store.dispatch('visible', fields.slice(0,5))
+			}
+
+		}
+
+		//this.loadData();
 	}
 }
 </script>

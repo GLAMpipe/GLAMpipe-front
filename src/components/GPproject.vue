@@ -1,8 +1,15 @@
+<style>
+.sideBar {
+	background-color: rgb(244, 246, 247);
+}
+</style>
+
+
 
 <template>
 	<b-row>
 		<b-button v-show="!$G.showSideBar" @click="$G.showSideBar = !$G.showSideBar"><b-icon icon="caret-right"></b-icon></b-button>
-		<b-col cols="3" v-show="$G.showSideBar">
+		<b-col cols="3" v-show="$G.showSideBar" class="sideBar">
 			<b-container fluid>
 				<GPprojectSidebar />
 			</b-container>
@@ -25,29 +32,16 @@ import axios from "axios"
 export default {
 	name: 'GPProject',
 	components: {GPprojectSidebar, GPdataTable, GPnodeRun},
-	data() {
-		return {
-			project: null,
-			c_collection: null,
-			c_node: null,
-			fields: [
-				'title',
-				'description',
-				{ key: 'collection_count', label: 'collection count' }
-			]
-		}
-	},
-
 	methods: {
 		async loadData() {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
-			this.project = response.data
-			this.$G.current_project = this.project
-			this.$G.current_node = null
+			this.$store.commit('current_project', response.data)
 		}
 	},
-	created: function() {
-			this.loadData();
+	created: async function() {
+		console.log('loading project')
+		//await this.loadData();
+		console.log('loading DONE')
 	}
 }
 </script>

@@ -87,10 +87,10 @@ export default {
 		}
 	},
 	created: function() {
-			this.$G.current_collection = null
-			this.$G.current_project = null
+			this.$store.commit('current_collection', null)
+			this.$store.commit('current_project', null)
 			this.loadData();
-			this.$G.current_project = null
+
 	}
 }
 </script>

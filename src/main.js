@@ -1,28 +1,101 @@
 import Vue from 'vue'
+import Vuex from 'vuex'
 import VueRouter from 'vue-router'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
+import VueSocketIO from 'vue-socket.io'
 import LoadScript from 'vue-plugin-load-script';
-
-
 import App from './App.vue'
 
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 Vue.use(VueRouter)
 Vue.use(LoadScript)
+Vue.use(Vuex)
+
+const store = new Vuex.Store({
+	state: {
+		connect: false,
+		current_project: null,
+		running_projects: null,
+		current_collection: null,
+		visible: [],
+		user: {},
+		message: ''
+	},
+	getters: {
+		getVisibleFields: (state) => (collection) => {
+			if(state.user && state.user.fields)
+				return state.user.fields.find(fields => fields.collection === collection)
+			else return []
+		}
+	},
+	mutations: {
+		message(state, payload) {
+			this.state.message = payload
+		},
+		current_project(state, payload) {
+			this.state.current_project = payload
+		},
+		current_collection(state, payload) {
+			this.state.current_collection = payload
+		},
+		current_node(state, payload) {
+			this.state.current_node = payload
+		},
+		add_running_project(state, payload) {
+			this.state.running_projects.push(payload)
+		},
+		remove_running_project(state, payload) {
+			this.state.running_projects = this.state.running_projects.filter(function(e) { return e !== payload })
+		},
+		user(state, payload) {
+			this.state.user = payload
+		},
+		visible(state, payload) {
+			this.state.visible = payload
+		}
+	},
+	actions: {
+		"SOCKET_connect"() {
+			console.log('CONNNNNNECTING')
+		},
+		"SOCKET_progress"(data, msg) {
+			console.log('data..')
+			console.log(data)
+			console.log('progress..')
+			console.log(msg.msg)
+			this.commit('message', msg.msg)
+			//this.commit('increment')
+		},
+		"SOCKET_finish"(data, msg) {
+			console.log('data..')
+			console.log(data)
+			console.log('progress..')
+			console.log(msg.msg)
+			this.commit('message', msg.msg)
+			//this.commit('increment')
+		},
+		"visible"(data, msg) {
+			console.log('set visible field')
+			console.log(msg)
+			this.commit('visible', msg)
+		}
+	}
+})
+
+Vue.use(new VueSocketIO({
+    debug: true,
+    connection: 'http://localhost:8080',
+    vuex: {
+        store,
+        actionPrefix: 'SOCKET_',
+        mutationPrefix: 'SOCKET_'
+    },
+    options: { path: "/socket.io/" } //Optional options
+}))
+
 
 Vue.config.productionTip = false
-/*
-Vue.component('nodesettings', {
-  props: ['code'],
-  render(h){
-    // render a 'container' div
-    return h('div', [
-      h(Vue.compile(this.code)) // compile and render 'code' string
-    ])
-  }
-})
-*/
 
 // 2. Define route components
 import GPmain from './components/GPmain.vue'
@@ -54,7 +127,7 @@ var shared = new Vue({
 		current_project: null,
 		current_collection: null,
 		current_node: null,
-		running: false,
+		running: [],
 		showSideBar: true
 	},
 	methods: {
@@ -89,7 +162,9 @@ shared.install = function(){
 }
 Vue.use(shared);
 
+
 new Vue({
   router,
+  store,
   render: h => h(App),
 }).$mount('#app')

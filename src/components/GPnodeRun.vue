@@ -91,6 +91,7 @@ export default {
 			try {
 				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
 				this.$G.current_node = null
+				location.reload()
 			} catch(e) {
 				console.log(e)
 			}

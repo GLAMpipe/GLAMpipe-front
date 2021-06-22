@@ -1,4 +1,4 @@
-<style scoped>
+$G<style scoped>
 .pointer {
   cursor: pointer;
 }
@@ -41,7 +41,7 @@
 							<b-nav-item
 								v-for="collection in $G.current_project.collections"
 								:key="collection.name"
-								@click="$router.push({ path: '/projects/' + $G.current_project._id + '/collection/' + collection.name })">
+								@click="setCurrentCollection(collection)">
 								<b-badge>{{collection.title}}</b-badge>
 							</b-nav-item>
 						</b-navbar-nav>
@@ -196,29 +196,39 @@ export default {
 
 	watch: {
 		$route() {
-			if(this.$route.params.collection) {
-				this.setCurrentCollection()
+			if(this.$route.query.collection) {
+				this.getCurrentCollectionFromURL()
 			} else {
 				this.current = null
 			}
 		}
 	},
 
-	methods: {
 
+	methods: {
 		async loadProject() {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
 			this.$G.current_project = response.data
-			if(this.$route.params.collection) this.setCurrentCollection() //
-			else if(this.$G.current_project.collections[0]) this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + this.$G.current_project.collections[0].name })
+			//this.$store.commit('current_project', response.data)
+			if(this.$route.query.collection) this.getCurrentCollectionFromURL() //
+			else if(this.$G.current_project.collections[0]) this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + this.$G.current_project.collections[0].name })
 			//if(this.project.collections[0) $router.push()
 		},
 
 		async loadNodes() {
-			var response = await axios(`/api/v2/collections/${this.$route.params.collection}/nodes`)
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/nodes`)
+			console.log('nodet haettu...')
 			this.nodes = response.data.nodes
 			this.sortNodes()
 
+		},
+
+		sortNodes() {
+			this.nodes_sorted = {}
+			for(var node of this.nodes) {
+				if(this.nodes_sorted[node.type]) this.nodes_sorted[node.type].push(node)
+				else this.nodes_sorted[node.type] = [node]
+			}
 		},
 
 		async initNodeParams() {
@@ -226,14 +236,14 @@ export default {
 			let createOptions = (option) => '<option>' + option.title + '</option>'
 			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
 			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
-			$('#node-parameters').append('<p class="alert alert-info">Please note that node parameters can NOT be changed after the node is created</div>')
+			$('#node-parameters').append('<br><p class="alert alert-info">Tip: Node parameters can NOT be changed after the node is created</div>')
 
 			// set params UI script
 			if(this.current_repo_node && this.current_repo_node.scripts.ui_params) {
 				var settingsScript = new Function('node', '$', 'g_apipath', this.current_repo_node.scripts.ui_params);
 				settingsScript(this.current_repo_node, $, 'http://localhost:8080/api/v2');
 			} else {
-				$('#node-parameters').append('<br>no params script')
+				$('#node-parameters').append('<br>DEBUG: no params script')
 			}
 		},
 
@@ -260,16 +270,17 @@ export default {
 			}
 
 			try {
-				var node_result = await axios.post('/api/v2/nodes', node_init)
-				console.log(node_result)
-
 				// we need to create form for file import (upload)
 				if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
 					let file = document.getElementById('file').files[0]
+					if(!file || !(file instanceof File)) throw('You must upload file!')
+					node_init.params.file = file.name
+					var node_result = await axios.post('/api/v2/nodes', node_init)
 					let formData = new FormData();
 					formData.append('file', file)
-					var result = await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
-					console.log(result)
+					await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
+				} else {
+					await axios.post('/api/v2/nodes', node_init)
 				}
 				//this.loadNodes()
 				location.reload()
@@ -285,27 +296,26 @@ export default {
 			}
 			var col_result = await axios.post('/api/v2/collections', collection_init)
 			console.log(col_result)
-			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + col_result.data.id })
+			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + col_result.data.id }).catch(err => {console.log(err)})
 		},
 
-		sortNodes() {
-			this.nodes_sorted = {}
-			for(var node of this.nodes) {
-				if(this.nodes_sorted[node.type]) this.nodes_sorted[node.type].push(node)
-				else this.nodes_sorted[node.type] = [node]
+
+		setCurrentCollection(collection) {
+			if(collection) {
+				//this.$G.current_collection = collection
+				this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + collection.name })
 			}
+			//this.loadNodes()
 		},
 
-		setCurrentCollection() {
-			var collection = this.$G.current_project.collections.find(col => col.name == this.$route.params.collection)
-			if(!this.$G.current_collection) {
-				this.$G.current_collection = collection
-				this.loadNodes()
+		getCurrentCollectionFromURL() {
+			var collection = null
+			console.log(this.$route.query.collection)
+			if(this.$route.query.collection) {
+				collection = this.$G.current_project.collections.find(col => col.name == this.$route.query.collection)
 			}
-			if(this.$G.current_collection && this.$G.current_collection.name != collection.name) {
-				this.$G.current_collection = collection
-				this.loadNodes()
-			}
+			this.$G.current_collection = collection
+			this.loadNodes()
 		},
 
 		setCurrentNode(node) {
@@ -315,20 +325,20 @@ export default {
 			//this.$emit('update:current_node', this.$G.current_node)
 			//this.parseSettingsHTML()
 		},
+
 		parseSettingsHTML() {
-			this.$G.current_node.views.settings = "<input id='testi'/>"
+			this.$store.current_node.views.settings = "<input id='testi'/>"
 		},
+
 		async getNodesFromRepository() {
 			var response = await axios(`/api/v2/repository/nodes`)
 			this.repository = response.data.data
-
-
 		}
 	},
 
 	created: function() {
-			this.loadProject();
-			this.getNodesFromRepository()
+		this.loadProject()
+		this.getNodesFromRepository()
 	}
 }
 </script>

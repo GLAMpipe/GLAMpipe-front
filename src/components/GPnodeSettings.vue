@@ -89,7 +89,7 @@ export default {
 			console.log(settings)
 			var node_result = await axios.post(`/api/v2/nodes/${this.$G.running_node}/run`, settings)
 			console.log(node_result)
-			this.$G.running_node = false
+			//this.$G.running_node = false
 		},
 
 		async stopNode() {
