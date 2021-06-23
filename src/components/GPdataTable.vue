@@ -290,6 +290,9 @@ export default {
 			// if we changed collection, we must set user fields
 			if(from.query.collection != to.query.collection) this.getUserFields()
 			this.loadData()
+		},
+		"$G.current_node"() {
+			console.log(this.$G.current_node.schema)
 		}
 	},
 
@@ -316,12 +319,12 @@ export default {
 				await this.loadSchema()
 			}
 			this.collection = this.$route.query.collection
-			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit
+			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit - this.dataLimit
 			else this.dataStart = 0
 			//this.getVisibleFields()
 			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.selected_fields.join(',')}${sort_str}`)
 			this.data = response.data
-			this.pageCount = Math.floor(this.data.total/this.dataLimit)
+			this.pageCount = Math.ceil(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
 			this.initted = true
 		},
@@ -442,7 +445,6 @@ export default {
 			console.log('ROUTE on')
 			this.collection = this.$route.query.collection
 			await this.getUserFields()
-			//this.loadData()
 		}
 	}
 }

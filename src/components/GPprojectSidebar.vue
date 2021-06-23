@@ -1,4 +1,4 @@
-$G<style scoped>
+<style>
 .pointer {
   cursor: pointer;
 }
@@ -19,6 +19,9 @@ $G<style scoped>
 }
 .navbar-toggler {
 	font-size:1.0rem;
+}
+#node-parameters label {
+	display:block;
 }
 
 
@@ -72,7 +75,7 @@ $G<style scoped>
 						</b-link>
 					</b-navbar-toggle></h6>
 
-					<b-collapse :id="`${type.key}`"  is-nav style="margin-bottom:2em">
+					<b-collapse :id="`${type.key}`" :ref="`${type.key}`" is-nav style="margin-bottom:2em">
 						<b-list-group>
 							<b-list-group-item   v-for="(title, subtype) in verbose[type.key]" :key="title">
 								<b-navbar-toggle :target="`${type.key}-${subtype}`">{{title}}</b-navbar-toggle>
@@ -105,6 +108,7 @@ $G<style scoped>
 							</b-card-text>
 						</b-card-body>
 					</b-card>
+
 				</template>
 			</div>
 		</div>
@@ -133,7 +137,9 @@ $G<style scoped>
 			<div >
 				<p>{{current_repo_node.description}}</p>
 				<h5>Node parameters</h5>
-				<div id="node-parameters" v-html="current_repo_node.views.params"></div>
+				<b-card id="node-parameters">
+					<b-card-body v-html="current_repo_node.views.params"></b-card-body>
+				</b-card>
 				<!--<div id="node-parameters">params... here</div>-->
 			</div>
 		</b-modal>
@@ -215,11 +221,12 @@ export default {
 			//if(this.project.collections[0) $router.push()
 		},
 
-		async loadNodes() {
-			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/nodes`)
+		async loadNodes(current) {
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/nodes?limit=100`)
 			console.log('nodet haettu...')
 			this.nodes = response.data.nodes
 			this.sortNodes()
+			if(current) this.$G.current_node = this.nodes.find(node => node._id === current)
 
 		},
 
@@ -236,7 +243,11 @@ export default {
 			let createOptions = (option) => '<option>' + option.title + '</option>'
 			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
 			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
-			$('#node-parameters').append('<br><p class="alert alert-info">Tip: Node parameters can NOT be changed after the node is created</div>')
+			//$('#node-parameters').append('<br><p class="alert alert-info">Tip: Node parameters can NOT be changed after the node is created</div>')
+			axios.get(`/api/v2/collections/${this.$route.query.collection}/schema`).then(response => {
+				var fields = response.data.keys.map(key => '<option>' + key + '</option>')
+				$('#node-parameters select.dynamic-field').append(fields.join('\n'))
+			})
 
 			// set params UI script
 			if(this.current_repo_node && this.current_repo_node.scripts.ui_params) {
@@ -271,19 +282,21 @@ export default {
 
 			try {
 				// we need to create form for file import (upload)
+				var node_result = null
 				if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
 					let file = document.getElementById('file').files[0]
 					if(!file || !(file instanceof File)) throw('You must upload file!')
 					node_init.params.file = file.name
-					var node_result = await axios.post('/api/v2/nodes', node_init)
+					node_result = await axios.post('/api/v2/nodes', node_init)
 					let formData = new FormData();
 					formData.append('file', file)
 					await axios.post(`/api/v2/nodes/${node_result.data.source._id}/upload`, formData, {headers:{'Content-Type': 'multipart/form-data'}})
 				} else {
-					await axios.post('/api/v2/nodes', node_init)
+					node_result = await axios.post('/api/v2/nodes', node_init)
 				}
-				//this.loadNodes()
-				location.reload()
+				this.$root.$emit('bv::toggle::collapse', this.current_repo_node.type)
+				this.loadNodes(node_result.data.uuid)
+				//location.reload()
 			} catch(e) {
 				alert('Node creation failed ' + e)
 			}
@@ -331,7 +344,7 @@ export default {
 		},
 
 		async getNodesFromRepository() {
-			var response = await axios(`/api/v2/repository/nodes`)
+			var response = await axios(`/api/v2/repository/nodes?limit=100`)
 			this.repository = response.data.data
 		}
 	},
