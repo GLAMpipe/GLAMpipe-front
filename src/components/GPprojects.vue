@@ -9,7 +9,7 @@
 		<h1 class="h2">Projects</h1>
 		<b-table small striped hover :items="projects" :fields="fields">
 			<template #cell(title)="data">
-				<b-link :to="{ path: '/projects/' + data.item._id }"> {{data.item.title}}</b-link>
+				<b-link :to="{ path: projectURL(data.item) }"> {{data.item.title}}</b-link>
 				<span class="dim"> ({{data.item.collection_count}} collections,</span>
 				<span class="dim"> {{data.item.node_count}} nodes)</span>
 
@@ -64,6 +64,10 @@ export default {
 	},
 
 	methods: {
+		projectURL(project) {
+			if(project.collections.length)
+			return `/projects/${project._id}?collection=${project.collections[0].name}`
+		},
 		async loadData() {
 			var response = await axios("/api/v2/projects?sort=star,title&limit=100")
 			this.projects = response.data.data
@@ -89,6 +93,10 @@ export default {
 	created: function() {
 			this.$store.commit('current_collection', null)
 			this.$store.commit('current_project', null)
+			//this.$store.commit('visible', null)
+			this.$G.current_project = null
+			this.$G.current_collection = null
+			this.$G.visible_fields = []
 			this.loadData();
 
 	}

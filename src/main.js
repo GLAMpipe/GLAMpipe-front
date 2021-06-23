@@ -4,6 +4,7 @@ import VueRouter from 'vue-router'
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import VueSocketIO from 'vue-socket.io'
 import LoadScript from 'vue-plugin-load-script';
+import axios from "axios"
 import App from './App.vue'
 
 Vue.use(BootstrapVue)
@@ -79,6 +80,7 @@ const store = new Vuex.Store({
 			console.log('set visible field')
 			console.log(msg)
 			this.commit('visible', msg)
+			axios.put(`/api/v2/user/fields`, {collection: this.state.current_collection, fields: this.state.visible})
 		}
 	}
 })
@@ -123,15 +125,27 @@ var shared = new Vue({
 		api_url: '/s/converis',
 		login: true ,
 		error: null,
-		user: null,
+		user: {},
 		current_project: null,
 		current_collection: null,
 		current_node: null,
+		visible_fields: [],
 		running: [],
 		showSideBar: true
 	},
 	methods: {
 
+		getUserFields(collection_name) {
+			if(this.user && this.user.fields) {
+				var fields = this.user.fields.find(fields => fields.collection === collection_name)
+				if(fields) return fields.fields
+				else return null
+			} else return null
+		},
+		updateUserFields(fields) {
+			this.visible_fields = fields
+			axios.put(`/api/v2/user/fields`, {collection: this.current_collection, fields: fields})
+		},
 		getToday() {
 			var today = new Date();
 			return (today.getFullYear() + '.' + ('0' + (today.getMonth()+1)).slice(-2) + '.' + ('0' + (today.getDate())).slice(-2));

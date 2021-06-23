@@ -211,7 +211,7 @@ export default {
 			this.$G.current_project = response.data
 			//this.$store.commit('current_project', response.data)
 			if(this.$route.query.collection) this.getCurrentCollectionFromURL() //
-			else if(this.$G.current_project.collections[0]) this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + this.$G.current_project.collections[0].name })
+			//else if(this.$G.current_project.collections[0]) this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + this.$G.current_project.collections[0].name })
 			//if(this.project.collections[0) $router.push()
 		},
 
@@ -296,7 +296,7 @@ export default {
 			}
 			var col_result = await axios.post('/api/v2/collections', collection_init)
 			console.log(col_result)
-			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '/collection/' + col_result.data.id }).catch(err => {console.log(err)})
+			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + col_result.data.id }).catch(err => {console.log(err)})
 		},
 
 

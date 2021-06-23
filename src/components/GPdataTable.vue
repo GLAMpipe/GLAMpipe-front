@@ -167,17 +167,27 @@ settinglistcontainer label {
 
 <template>
 	<b-container fluid v-if="data && $G.current_collection">
-
-		<b-button @click="$store.dispatch('visible',['title'])">koe</b-button>
 		<div>
-		  <b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button>
-		  <b-sidebar id="sidebar-1" title="Debug" shadow>
-			<div class="px-3 py-2">
-			  <p>
-				  {{$store.state.visible}}
-			  </p>
-			</div>
-		  </b-sidebar>
+			<b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button>
+			<b-sidebar id="sidebar-1" title="Debug" shadow>
+				<div class="px-3 py-2">
+					<p>
+						store.visible: {{$store.state.visible}}
+					</p>
+					<p>
+						$G.visible_fields: {{$G.visible_fields}}
+					</p>
+					<p>
+						$G.user.user: {{$G.user.user}}
+					</p>
+					<p>
+						selected_fields: {{selected_fields}}
+					</p>
+					<p>
+						table_fields: {{table_fields}}
+					</p>
+				</div>
+			</b-sidebar>
 		</div>
 		<b-navbar toggleable="m" >
 			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
@@ -192,7 +202,7 @@ settinglistcontainer label {
 							<b-button @click="uncheck()">uncheck all</b-button>
 							<b-row cols="3">
 								<template v-for="key in schema.keys"  >
-									<b-col :key="key"><b-form-checkbox  v-model="selected" :value="key">{{key}}</b-form-checkbox></b-col>
+									<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
 								</template>
 							</b-row>
 						</b-container>
@@ -218,7 +228,7 @@ settinglistcontainer label {
 		</div>
 
 		<!-- DATA TABLE -->
-		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="fields" @sort-changed="sortingChanged">
+		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
 			<template #cell()="data">
 				<div v-html="renderCell(data.value)"></div>
 			</template>
@@ -244,9 +254,9 @@ export default {
 			pageCount: 1,
 			dataStart: 0,
 			dataLimit: 15,
-			selected: [],
 			sort: null,
-			fields: [],
+			table_fields: [],
+			selected_fields: [],
 			query_keys: [],
 			query_types: [],
 			query_type_list: ['is exactly', 'contains'],
@@ -255,54 +265,61 @@ export default {
 	},
 
 	computed: {
-		visible() {
-			return this.$store.state.visible
-		}
-	},
-	watch: {
-		visible() {
-				console.log('visible muutti')
-				this.selected = this.visible.map(key => { return {'label':key, 'key':key}})
-				this.loadData()
-		},
-
-		//selected() {
-
-		//	this.fields = this.selected.map(key => {return {'key':key, 'label':key, 'sortable': true}})
-			//this.setUserFields()
-			//this.loadData()
-
-		//},
-
-		$route() {
-			console.log('route vaihtui table-watch')
-			if(this.$route.query.collection) {
-				if(this.collection != this.$route.query.collection) {
-					this.selected = []
-					this.initted = false
-				} else {
-					this.loadData()
-				}
-			} else {
-				this.current = null
+		visible: {
+			get() {
+				return this.$store.state.visible
+			},
+			set(value) {
+				console.log('setting visible')
+				this.$store.dispatch('visible', value)
 			}
 		}
 	},
 
+	watch: {
+		selected_fields() {
+			this.table_fields = this.selected_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
+			axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: this.selected_fields})
+			this.loadData()
+		},
+
+		async $route(from, to) {
+			console.log('route vaihtui table-watch')
+			console.log(from)
+			console.log(to)
+			// if we changed collection, we must set user fields
+			if(from.query.collection != to.query.collection) this.getUserFields()
+			this.loadData()
+		}
+	},
+
 	methods: {
+		async getUserFields() {
+			await this.loadSchema()
+			var fields = this.$G.getUserFields(this.$route.query.collection)
+			// if user fields does not exist, then create them
+			if(!fields || fields.length == 0) {
+				console.log('User fields not found')
+				fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
+				axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: fields})
+			}
+
+			this.selected_fields = fields
+			this.table_fields = fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
+		},
+
 		async loadData() {
 			var sort_str = ''
-			if(this.sort) sort_str = `&sort=${this.sort.sortBy}&reverse=${this.sort.sortDesc ? '0':'1'}`
+			if(this.sort) sort_str = `&sort=${this.sort.sortBy}&reverse=${this.sort.sortDesc ? '1':'0'}`
 			// did collection change?
 			if(this.collection != this.$route.query.collection) {
 				await this.loadSchema()
 			}
 			this.collection = this.$route.query.collection
-			console.log('loadin data ' + this.selected.length)
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit
 			else this.dataStart = 0
 			//this.getVisibleFields()
-			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.selected.join(',')}${sort_str}`)
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.selected_fields.join(',')}${sort_str}`)
 			this.data = response.data
 			this.pageCount = Math.floor(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
@@ -420,22 +437,13 @@ export default {
 	},
 
 	created: async function() {
-
+		console.log('TABLE created')
 		if(this.$route.query.collection) {
+			console.log('ROUTE on')
 			this.collection = this.$route.query.collection
-			await this.loadSchema()
-
-			if(this.$store.getters.getVisibleFields(this.collection)) {
-			 	var fields =  this.$store.getters.getVisibleFields(this.collection).fields
-				this.$store.dispatch('visible', fields)
-			} else {
-				var fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
-				this.$store.dispatch('visible', fields.slice(0,5))
-			}
-
+			await this.getUserFields()
+			//this.loadData()
 		}
-
-		//this.loadData();
 	}
 }
 </script>

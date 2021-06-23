@@ -33,7 +33,7 @@
 				{{$store.state.user.user}}
 			</b-navbar-brand>
 				{{$store.state.message}}
-				{{$store.state.visible}}
+			
 		</b-navbar>
 
 
@@ -59,9 +59,15 @@ export default {
 			logging: false
 		}
 	},
+	updated: function() {
+		console.log('App udpated')
+		axios.get('/api/v2/user').then(user => this.$G.user = user.data)
+
+	},
 	created: async function() {
+		console.log('App created')
 		var user = await axios.get('/api/v2/user')
-		this.$store.commit('user', user.data)
+		this.$G.user = user.data
 	}
 }
 </script>
