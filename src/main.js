@@ -19,6 +19,7 @@ const store = new Vuex.Store({
 		current_project: null,
 		running_projects: null,
 		current_collection: null,
+		running_node: null,
 		visible: [],
 		user: {},
 		message: ''
@@ -43,6 +44,9 @@ const store = new Vuex.Store({
 		current_node(state, payload) {
 			this.state.current_node = payload
 		},
+		running_node(state, payload) {
+			this.state.running_node = payload
+		},
 		add_running_project(state, payload) {
 			this.state.running_projects.push(payload)
 		},
@@ -61,18 +65,20 @@ const store = new Vuex.Store({
 			console.log('CONNNNNNECTING')
 		},
 		"SOCKET_progress"(data, msg) {
-			console.log('data..')
+			console.log('progress data..')
 			console.log(data)
-			console.log('progress..')
+			console.log('progress msg')
 			console.log(msg.msg)
 			this.commit('message', msg.msg)
 			//this.commit('increment')
 		},
 		"SOCKET_finish"(data, msg) {
-			console.log('data..')
+			console.log('finish data')
 			console.log(data)
-			console.log('progress..')
+			console.log('finish msg')
 			console.log(msg.msg)
+			//shared.running_node = 'dippu'
+			this.commit('running_node', null)
 			this.commit('message', msg.msg)
 			//this.commit('increment')
 		},
@@ -129,8 +135,8 @@ var shared = new Vue({
 		current_project: null,
 		current_collection: null,
 		current_node: null,
+		current_node_fields: [],
 		visible_fields: [],
-		running: [],
 		showSideBar: true
 	},
 	methods: {

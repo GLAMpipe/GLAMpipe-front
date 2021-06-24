@@ -159,8 +159,12 @@ settinglistcontainer ul {
 	list-style-type: none;
 }
 
-settinglistcontainer label {
+settinglistcontainer li label {
 	display: inline
+}
+
+settingaction label {
+	display: block
 }
 
 </style>
@@ -180,11 +184,11 @@ settinglistcontainer label {
 					<p>
 						$G.user.user: {{$G.user.user}}
 					</p>
-					<p>
-						selected_fields: {{selected_fields}}
+					<p v-if="$store.state.running_node">
+						$store.state.running_node: {{$store.state.running_node.title}}
 					</p>
-					<p>
-						table_fields: {{table_fields}}
+					<p v-if="$G.running_node">
+						$G.running_node: {{$G.running_node.title}}
 					</p>
 				</div>
 			</b-sidebar>
@@ -192,7 +196,7 @@ settinglistcontainer label {
 		<b-navbar toggleable="m" >
 			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
 			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
-			<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
+			<b-navbar-toggle target="nav-table"><b-icon icon="caret-down"></b-icon> <b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
 
 			<b-collapse id="nav-table" is-nav @shown="populateTabs">
 				<b-tabs content-class="mt-3" >
@@ -257,6 +261,7 @@ export default {
 			sort: null,
 			table_fields: [],
 			selected_fields: [],
+			current_fields: [],
 			query_keys: [],
 			query_types: [],
 			query_type_list: ['is exactly', 'contains'],
@@ -278,11 +283,13 @@ export default {
 
 	watch: {
 		selected_fields() {
-			this.table_fields = this.selected_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
+			this.current_fields = this.selected_fields
 			axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: this.selected_fields})
+		},
+		current_fields() {
+			this.table_fields = this.current_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
 			this.loadData()
 		},
-
 		async $route(from, to) {
 			console.log('route vaihtui table-watch')
 			console.log(from)
@@ -292,11 +299,23 @@ export default {
 			this.loadData()
 		},
 		"$G.current_node"() {
-			console.log(this.$G.current_node.schema)
+			if(this.$G.current_node && this.$G.current_node.type == 'process') this.current_fields = this.getNodeFields(this.$G.current_node)
+			else this.current_fields = this.selected_fields
+		},
+		"$store.state.running_node"() {
+			if(!this.$G.running_node) this.loadData()
 		}
 	},
 
 	methods: {
+		getNodeFields(node) {
+			var fields = []
+			if(node.params) {
+				if(node.params.in_field) fields.push(node.params.in_field)
+				if(node.params.out_field) fields.push(node.params.out_field)
+				return fields
+			}
+		},
 		async getUserFields() {
 			await this.loadSchema()
 			var fields = this.$G.getUserFields(this.$route.query.collection)
@@ -308,6 +327,7 @@ export default {
 			}
 
 			this.selected_fields = fields
+			this.current_fields = fields
 			this.table_fields = fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
 		},
 
@@ -322,7 +342,7 @@ export default {
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit - this.dataLimit
 			else this.dataStart = 0
 			//this.getVisibleFields()
-			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.selected_fields.join(',')}${sort_str}`)
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.current_fields.join(',')}${sort_str}`)
 			this.data = response.data
 			this.pageCount = Math.ceil(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
@@ -358,9 +378,9 @@ export default {
 				// render urls as links
 				if(typeof data == "string" && data.match(/^http/) && !this.editMode) {
 					if(index === 0 || index)
-						html += "<div class='"+className+"'>["+index+"]<a target='_blank' href='"+data+"'>" + data + "</a></div>";
+						html += "<div class='"+className+"'>["+index+"] <a target='_blank' href='"+data+"'>" + data + "</a></div>";
 					else
-						html += "<div class='"+className+"'><a target='_blank' href='"+data+"'>" + data + "</a></div>";
+						html += "<div class='"+className+"'> <a target='_blank' href='"+data+"'>" + data + "</a></div>";
 
 				// render errors
 				} else if(typeof data == "string" && data.match("^AAAA_error")) {

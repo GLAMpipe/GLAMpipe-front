@@ -4,8 +4,13 @@
 	<div id="node-settings" ref="nodesettings">
 		<b-collapse visible appear @shown="initSettingsScript" id="set" >
 			<div v-html="$G.current_node.views.settings"></div>
-			<b-button v-if="!$G.running_node" @click="runNode()" variant="primary">import data</b-button>
-			<b-button v-if="$G.running_node == $G.current_node._id" @click="stopNode()" variant="primary">stop</b-button>
+			<template v-if="!$store.state.running_node">
+				<b-button v-if="!$G.running_node && $G.current_node.type == 'source'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Import data</b-button>
+				<b-button v-if="!$G.running_node && $G.current_node.type == 'process'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Run for all documents</b-button>
+				<b-button v-if="!$G.running_node && $G.current_node.type == 'export'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Export all documents</b-button>
+				<b-button v-if="!$G.running_node && $G.current_node.type == 'view'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Generate view</b-button>
+			</template>
+			<b-button v-if="$store.state.running_node && $store.state.running_node._id == $G.current_node._id" @click="stopNode()" variant="primary">stop</b-button>
 
 		</b-collapse>
 	</div>
@@ -30,14 +35,14 @@ export default {
 	watch: {
 		'$G.current_node':function() {
 			if(this.$G.current_node) {
-				console.log('node settings vaihtui')
+				console.log('current node')
 			}
 		}
 	},
 	methods: {
 		initSettingsScript() {
 			if(!this.scriptInitted) {
-				this.$G.current_node.settings = {}
+				if(!this.$G.current_node.settings) this.$G.current_node.settings = {}
 				var settingsScript = new Function('node', '$', 'g_apipath', this.$G.current_node.scripts.ui_settings);
 				settingsScript(this.$G.current_node, $, 'http://localhost:8080/api/v2');
 				this.scriptInitted = true
@@ -84,10 +89,10 @@ export default {
 		},
 
 		async runNode() {
-			this.$G.running_node = this.$G.current_node._id
+			this.$store.commit('running_node', this.$G.current_node)
 			var settings = this.getSettings()
 			console.log(settings)
-			var node_result = await axios.post(`/api/v2/nodes/${this.$G.running_node}/run`, settings)
+			var node_result = await axios.post(`/api/v2/nodes/${this.$store.state.running_node._id}/start`, settings)
 			console.log(node_result)
 			//this.$G.running_node = false
 		},

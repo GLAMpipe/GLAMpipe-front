@@ -86,9 +86,15 @@ export default {
 			this.loadData()
 		},
 		openDeleteDialog(project) {
-				this.selected_for_delete = project
-				this.showDelete = !this.showDelete
+			this.selected_for_delete = project
+			this.showDelete = !this.showDelete
 		}
+	},
+	updated: function() {
+		this.$G.current_project = null
+		this.$G.current_collection = null
+		this.$G.current_node = null
+		this.$G.visible_fields = []
 	},
 	created: function() {
 			this.$store.commit('current_collection', null)

@@ -1,4 +1,4 @@
-<style>
+<style scoped>
 .pointer {
   cursor: pointer;
 }
@@ -335,6 +335,7 @@ export default {
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
 			else  this.$G.current_node = node
+			this.$G.current_node_fields = ['dc_contributor_author', 'dc_contributor_author_lowercase']
 			//this.$emit('update:current_node', this.$G.current_node)
 			//this.parseSettingsHTML()
 		},

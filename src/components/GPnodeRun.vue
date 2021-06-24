@@ -7,7 +7,9 @@
 <template>
 	<b-card v-if="$G.current_node" header-bg-variant="info" header-text-variant="white" header="Info">
 		<template #header>
-			<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">Settings for Node <b>{{$G.current_node.title}}</b>
+			<h6 @click="showNodeSettings = !showNodeSettings" class="mb-0 pointer">
+				<span><b-icon icon="caret-down"></b-icon></span>
+				Settings for Node <b>{{$G.current_node.title}}</b>
 		</h6>
 		</template>
 		<b-card-body style="padding:0.25rem" text-variant="info">
@@ -19,7 +21,7 @@
 
 				<b-tab title="Parameters (read only)">
 					<table class="table b-table">
-						<tr v-for="(v,i) in $G.current_node.params" :key="v">
+						<tr v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
 							<td>{{i}}</td><td><b>{{v}}</b></td>
 						</tr>
 					</table>
@@ -28,6 +30,17 @@
 				<b-tab title="Delete">
 					<div class="alert alert-warning">When you delete a node, also fields created by that node are deleted.</div>
 					<span @click="deleteNode" title="delete node"><b-badge variant="danger"><b-icon icon="trash"></b-icon> delete</b-badge></span>
+				</b-tab>
+
+				<b-tab title="debug">
+					<table class="table b-table">
+						<tr v-for="(val,i) in $G.current_node.settings" :key="`set${val}`">
+							<td>{{i}}</td><td><b>{{val}}</b></td>
+						</tr>
+					</table>
+					<a target="_blank" :href="`http://localhost:3333/api/v2/nodes/${$G.current_node._id}`">API</a><br>
+					<b-button @click="$store.commit('running_node', $G.current_node)">debug run</b-button>
+					<b-button @click="$store.commit('running_node', null)">debug stop</b-button>
 				</b-tab>
 			</b-tabs>
 

@@ -29,11 +29,17 @@
 				<span ><i>{{$G.current_project.description}}</i></span>
 				<b-icon icon="pen" style="margin-left:0.5em">></b-icon>
 			</b-navbar-brand>
+
+			<b-navbar-brand v-if="$store.state.running_node">
+				running
+				{{$store.state.running_node.title}}
+			</b-navbar-brand>
+
 			<b-navbar-brand class="float-right">
 				{{$store.state.user.user}}
 			</b-navbar-brand>
 				{{$store.state.message}}
-			
+
 		</b-navbar>
 
 
@@ -59,11 +65,7 @@ export default {
 			logging: false
 		}
 	},
-	updated: function() {
-		console.log('App udpated')
-		axios.get('/api/v2/user').then(user => this.$G.user = user.data)
 
-	},
 	created: async function() {
 		console.log('App created')
 		var user = await axios.get('/api/v2/user')
