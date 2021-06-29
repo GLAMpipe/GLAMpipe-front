@@ -38,7 +38,6 @@
 			<b-navbar-brand class="float-right">
 				{{$store.state.user.user}}
 			</b-navbar-brand>
-				{{$store.state.message}}
 
 		</b-navbar>
 

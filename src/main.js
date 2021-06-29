@@ -22,7 +22,9 @@ const store = new Vuex.Store({
 		running_node: null,
 		visible: [],
 		user: {},
-		message: ''
+		socket_finish: {},
+		socket_progress: {},
+		socket_error: {}
 	},
 	getters: {
 		getVisibleFields: (state) => (collection) => {
@@ -32,8 +34,14 @@ const store = new Vuex.Store({
 		}
 	},
 	mutations: {
-		message(state, payload) {
-			this.state.message = payload
+		socket_finish(state, payload) {
+			this.state.socket_finish = payload
+		},
+		socket_progress(state, payload) {
+			this.state.socket_progress = payload
+		},
+		socket_error(state, payload) {
+			this.state.socket_error = payload
 		},
 		current_project(state, payload) {
 			this.state.current_project = payload
@@ -69,7 +77,7 @@ const store = new Vuex.Store({
 			console.log(data)
 			console.log('progress msg')
 			console.log(msg.msg)
-			this.commit('message', msg.msg)
+			this.commit('socket_progress', msg)
 			//this.commit('increment')
 		},
 		"SOCKET_finish"(data, msg) {
@@ -79,7 +87,15 @@ const store = new Vuex.Store({
 			console.log(msg.msg)
 			//shared.running_node = 'dippu'
 			this.commit('running_node', null)
-			this.commit('message', msg.msg)
+			this.commit('socket_finish', msg)
+			//this.commit('increment')
+		},
+		"SOCKET_error"(data, msg) {
+			console.log('error data..')
+			console.log(data)
+			console.log('error msg')
+			console.log(msg.msg)
+			this.commit('socket_error', msg)
 			//this.commit('increment')
 		},
 		"visible"(data, msg) {

@@ -1,9 +1,19 @@
-
+<style scoped>
+settingsaction label {
+	display:inline;
+}
+</style>
 
 <template>
 	<div id="node-settings" ref="nodesettings">
 		<b-collapse visible appear @shown="initSettingsScript" id="set" >
 			<div v-html="$G.current_node.views.settings"></div>
+			<setting v-if="$G.current_node.nodeid == 'process_script'">
+				<settinginfo>
+					<settingtitle>script editor </settingtitle>
+				</settinginfo>
+					<editor id="code-editor" v-model="editorContent" @init="editorInit" lang="javascript" theme="twilight" width="100%" height="400"></editor>
+			</setting>
 			<template v-if="!$store.state.running_node">
 				<b-button v-if="!$G.running_node && $G.current_node.type == 'source'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Import data</b-button>
 				<b-button v-if="!$G.running_node && $G.current_node.type == 'process'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Run for all documents</b-button>
@@ -11,6 +21,9 @@
 				<b-button v-if="!$G.running_node && $G.current_node.type == 'view'" @click="runNode()" variant="primary"><b-icon icon="play"></b-icon> Generate view</b-button>
 			</template>
 			<b-button v-if="$store.state.running_node && $store.state.running_node._id == $G.current_node._id" @click="stopNode()" variant="primary">stop</b-button>
+			<br><br>
+			<div v-if="$store.state.socket_error && $store.state.socket_error.node_uuid == $G.current_node._id" class="alert alert-warning">{{$store.state.socket_error.msg}}</div>
+			<div v-if="!$store.state.socket_error  && $store.state.socket_finish && $store.state.socket_finish.node_uuid == $G.current_node._id" class="alert alert-info">{{$store.state.socket_finish.msg}}</div>
 
 		</b-collapse>
 	</div>
@@ -23,12 +36,15 @@ import $ from 'jquery'
 
 export default {
 	name: 'GPnodeSettings',
-
+	components: {
+		editor: require('vue2-ace-editor'),
+	},
 	data() {
 		return {
 			showNodeSettings: true,
 			scriptInitted: false,
-			running: false
+			running: false,
+			editorContent:""
 		}
 	},
 
@@ -42,9 +58,26 @@ export default {
 	methods: {
 		initSettingsScript() {
 			if(!this.scriptInitted) {
+				// fields for current collection
+				axios.get(`/api/v2/collections/${this.$route.query.collection}/schema`).then(response => {
+					var fields = response.data.keys.map(key => '<option>' + key + '</option>')
+					$('#node-settings select.dynamic-field').append(fields.join('\n'))
+				})
+				// fields for lookup collection
+				if(this.$G.current_node.params && this.$G.current_node.params.required_source_collection) {
+					axios.get(`/api/v2/collections/${this.$G.current_node.params.required_source_collection}/schema`).then(response => {
+						var fields = response.data.keys.map(key => '<option>' + key + '</option>')
+						$('#node-settings select.lookup-dynamic-field').append(fields.join('\n'))
+					})
+				}
 				if(!this.$G.current_node.settings) this.$G.current_node.settings = {}
 				var settingsScript = new Function('node', '$', 'g_apipath', this.$G.current_node.scripts.ui_settings);
 				settingsScript(this.$G.current_node, $, 'http://localhost:8080/api/v2');
+				// script node
+				if(this.$G.current_node.nodeid.includes("script") ) {
+					if(this.$G.current_node.settings.js) this.editorContent = this.$G.current_node.settings.js
+					else this.editorContent = "out.value = 'Hello World, id of this document is: ' + context.doc._id "
+				}
 				this.scriptInitted = true
 			}
 
@@ -80,7 +113,7 @@ export default {
 			});
 
 			// script node requires sepcial handling
-			//if(self.source.nodeid.includes("script") && editor) settings['js'] = editor.getValue();
+			if(this.$G.current_node.nodeid.includes("script")) settings['js'] = this.editorContent;
 
 			// finally read the node description
 			var desc = $(".node-description-value").val();
@@ -90,6 +123,8 @@ export default {
 
 		async runNode() {
 			this.$store.commit('running_node', this.$G.current_node)
+			this.$store.commit('socket_finish', '')
+			this.$store.commit('socket_error', '')
 			var settings = this.getSettings()
 			console.log(settings)
 			var node_result = await axios.post(`/api/v2/nodes/${this.$store.state.running_node._id}/start`, settings)
@@ -99,6 +134,15 @@ export default {
 
 		async stopNode() {
 			this.$G.running_node = false
+		},
+		editorInit() {
+			require('brace/ext/language_tools') //language extension prerequsite...
+			require('brace/mode/html')
+			require('brace/mode/javascript')    //language
+			require('brace/mode/less')
+			//require('brace/theme/chrome')
+			require('brace/theme/twilight')
+			require('brace/snippets/javascript') //snippet
 		}
 	}
 }

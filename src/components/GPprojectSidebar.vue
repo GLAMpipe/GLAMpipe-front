@@ -25,6 +25,7 @@
 }
 
 
+
 </style>
 
 <template>
@@ -103,8 +104,12 @@
 						<b-card-body style="padding:0.25rem" text-variant="info">
 							<!--<b-card-title>{{node.title}}</b-card-title>-->
 							<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
-							<b-card-text>
-
+							<b-card-text v-if="$G.current_node && $G.current_node._id == node._id">
+								<table class="table b-table">
+									<tr v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
+										<td>{{i}}</td><td><b>{{v}}</b></td>
+									</tr>
+								</table>
 							</b-card-text>
 						</b-card-body>
 					</b-card>
@@ -240,7 +245,7 @@ export default {
 
 		async initNodeParams() {
 			let removeCurrent = (collection) => collection.name !== this.$G.current_collection.name ? this.$G.current_collection.name : null
-			let createOptions = (option) => '<option>' + option.title + '</option>'
+			let createOptions = (option) => `<option value="${option.name}"> ${option.title} </option>`
 			var collections = this.$G.current_project.collections.filter(removeCurrent).map(createOptions)
 			$('#node-parameters select.dynamic-collection').append(collections.join('\n'))
 			//$('#node-parameters').append('<br><p class="alert alert-info">Tip: Node parameters can NOT be changed after the node is created</div>')

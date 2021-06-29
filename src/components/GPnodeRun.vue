@@ -19,14 +19,6 @@
 					<GPnodeSettings></GPnodeSettings>
 				</b-tab>
 
-				<b-tab title="Parameters (read only)">
-					<table class="table b-table">
-						<tr v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
-							<td>{{i}}</td><td><b>{{v}}</b></td>
-						</tr>
-					</table>
-				</b-tab>
-
 				<b-tab title="Delete">
 					<div class="alert alert-warning">When you delete a node, also fields created by that node are deleted.</div>
 					<span @click="deleteNode" title="delete node"><b-badge variant="danger"><b-icon icon="trash"></b-icon> delete</b-badge></span>
