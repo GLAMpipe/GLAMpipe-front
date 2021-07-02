@@ -2,9 +2,7 @@
 	<div class="hello">
 		<b-card
 			header="Create project"
-			header-tag="h4"
-
-
+			header-tag="h5"
 			>
 			<b-card-text>Project contains your data, transforms, downloads etc..</b-card-text>
 			<b-form-input v-model="title" placeholder="project title"></b-form-input><br>
@@ -42,7 +40,7 @@ export default {
 				this.title = ''
 				this.description = ''
 				this.collection = ''
-				this.$router.push({ path: '/projects/' + result.data._id})
+				this.$router.push({ path: `/projects/${result.data._id}?collection=`})
 			} catch(e) {
 				alert(e)
 			}

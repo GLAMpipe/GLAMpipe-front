@@ -10,10 +10,7 @@
 	background:none !important;
 	color:black
 }
-.card {
-	margin-top: 20px;
-	margin-bottom: 20px;
-}
+
 .card-body {
 	padding:0.6rem;
 }
@@ -29,127 +26,130 @@
 </style>
 
 <template>
-	<div class="project-sidebar" v-show="showSideBar">
+	<b-card class="project-sidebar" v-show="showSideBar" header-tag="header">
 
 		<!-- // COLLECTION LIST -->
-		<div id="collection-nav" v-if="$G.current_project && $G.current_collection">
-			<b-navbar toggleable="m" >
-				<span @click="$G.showSideBar = !$G.showSideBar">
-					<b-icon icon="caret-left"></b-icon>
-				</span>
+			<template #header>
+				<div id="collection-nav" v-if="$G.current_project && $G.current_collection">
+					<b-navbar toggleable="m" >
+						<span @click="$G.showSideBar = !$G.showSideBar">
+							<b-icon icon="caret-left"></b-icon>
+						</span>
 
-				<b-navbar-brand>Nodes for
-					<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
-					<b-collapse id="nav-collapse" is-nav>
-						<b-navbar-nav class="ml-auto" >
-							<b-nav-item
-								v-for="collection in $G.current_project.collections"
-								:key="collection.name"
-								@click="setCurrentCollection(collection)">
-								<b-badge>{{collection.title}}</b-badge>
-							</b-nav-item>
-						</b-navbar-nav>
-						<b-link @click="showAddCollection = !showAddCollection">
-							<b-icon variant="info" icon="plus-circle-fill"></b-icon>
-						</b-link>
-					</b-collapse>
+						<b-navbar-brand>Nodes for
+							<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
+							<b-collapse id="nav-collapse" is-nav>
+								<b-navbar-nav class="ml-auto" >
+									<b-nav-item
+										v-for="collection in $G.current_project.collections"
+										:key="collection.name"
+										@click="setCurrentCollection(collection)">
+										<b-badge>{{collection.title}}</b-badge>
+									</b-nav-item>
+								</b-navbar-nav>
+								<b-link @click="showAddCollection = !showAddCollection">
+									<b-icon variant="info" icon="plus-circle-fill"></b-icon>
+								</b-link>
+							</b-collapse>
 
-				</b-navbar-brand>
-
-
-			</b-navbar>
-		</div>
-		<div v-else>
-			No collections yet. <b-button @click="showAddCollection" >create collection</b-button>
-		</div>
-
-
-		<!-- // NODE LIST -->
-		<div id="node-nav" v-if="$G.current_project">
-			<div v-for="type in nodetypes" :key="type.key">
-				<div style="margin-top:15px"><h6 small>{{type.label}}
-
-					<!-- ADD NODE DIALOG -->
-					<b-navbar-toggle :target="`${type.key}`">
-						<b-link>
-							<b-icon icon="plus-circle"></b-icon>
-						</b-link>
-					</b-navbar-toggle></h6>
-
-					<b-collapse :id="`${type.key}`" :ref="`${type.key}`" is-nav style="margin-bottom:2em">
-						<b-list-group>
-							<b-list-group-item   v-for="(title, subtype) in verbose[type.key]" :key="title">
-								<b-navbar-toggle :target="`${type.key}-${subtype}`">{{title}}</b-navbar-toggle>
-								<b-collapse :id="`${type.key}-${subtype}`"  is-nav style="margin-bottom:2em">
-									<div>
-										<template v-for="rnode in repository">
-											<b-card v-if="rnode.type == type.key && rnode.subtype == subtype" :key="rnode._id">
-												<b-link @click="current_repo_node = rnode; showAddNode = true">{{rnode.title}}</b-link>
-												<p>{{rnode.description}}</p>
-											</b-card>
-										</template>
-									</div>
-								</b-collapse>
-							</b-list-group-item>
-						</b-list-group>
-					</b-collapse>
+						</b-navbar-brand>
+					</b-navbar>
 				</div>
+				<div v-else>
+					No collections yet. <b-button @click="showAddCollection" >create collection</b-button>
+				</div>
+			</template>
+			<b-card-body>
 
-				<!-- LIST OF EXISTING NODES -->
-				<template v-if="nodes_sorted">
-					<b-card @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
-						<template #header>
-							<h6  class="mb-0 ">{{node.title}}</h6>
-						</template>
-						<b-card-body style="padding:0.25rem" text-variant="info">
-							<!--<b-card-title>{{node.title}}</b-card-title>-->
-							<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
-							<b-card-text v-if="$G.current_node && $G.current_node._id == node._id">
-								<table class="table b-table">
-									<tr v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
-										<td>{{i}}</td><td><b>{{v}}</b></td>
-									</tr>
-								</table>
-							</b-card-text>
-						</b-card-body>
+
+
+			<!-- // NODE LIST -->
+			<div id="node-nav" v-if="$G.current_project">
+				<div v-for="type in nodetypes" :key="type.key">
+					<div style="margin-top:15px"><h6 small>{{type.label}}
+
+						<!-- ADD NODE DIALOG -->
+						<b-navbar-toggle :target="`${type.key}`">
+							<b-link>
+								<b-icon icon="plus-circle"></b-icon>
+							</b-link>
+						</b-navbar-toggle></h6>
+
+						<b-collapse :id="`${type.key}`" :ref="`${type.key}`" is-nav style="margin-bottom:2em">
+							<b-list-group>
+								<b-list-group-item   v-for="(title, subtype) in verbose[type.key]" :key="title">
+									<b-navbar-toggle :target="`${type.key}-${subtype}`">{{title}}</b-navbar-toggle>
+									<b-collapse :id="`${type.key}-${subtype}`"  is-nav style="margin-bottom:2em">
+										<div>
+											<template v-for="rnode in repository">
+												<b-card v-if="rnode.type == type.key && rnode.subtype == subtype" :key="rnode._id">
+													<b-link @click="current_repo_node = rnode; showAddNode = true">{{rnode.title}}</b-link>
+													<p>{{rnode.description}}</p>
+												</b-card>
+											</template>
+										</div>
+									</b-collapse>
+								</b-list-group-item>
+							</b-list-group>
+						</b-collapse>
+					</div>
+
+					<!-- LIST OF EXISTING NODES -->
+					<template v-if="nodes_sorted">
+						<b-card @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
+							<template #header>
+								<h6  class="mb-0 ">{{node.title}}</h6>
+							</template>
+							<b-card-body style="padding:0.25rem" text-variant="info">
+								<!--<b-card-title>{{node.title}}</b-card-title>-->
+								<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
+								<b-card-text v-if="$G.current_node && $G.current_node._id == node._id">
+									<table class="table b-table">
+										<tr v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
+											<td>{{i}}</td><td><b>{{v}}</b></td>
+										</tr>
+									</table>
+								</b-card-text>
+							</b-card-body>
+						</b-card>
+
+					</template>
+				</div>
+			</div>
+
+			<!-- ADD COLLECTION MODAL -->
+			<b-modal
+				v-model="showAddCollection"
+				title="Add collection"
+				header-bg-variant="info"
+				okTitle="Create"
+				@ok="createCollection">
+				<div >
+					<b-input placeholder="collection title" v-model="new_collection"/>
+				</div>
+			</b-modal>
+
+			<!-- ADD NODED MODAL -->
+			<b-modal
+				v-if="current_repo_node"
+				v-model="showAddNode"
+				@shown="initNodeParams"
+				:title="current_repo_node.title"
+				header-bg-variant="info"
+				okTitle="Create node"
+				@ok="createNode">
+				<div >
+					<p>{{current_repo_node.description}}</p>
+					<h5>Node parameters</h5>
+					<b-card id="node-parameters">
+						<b-card-body v-html="current_repo_node.views.params"></b-card-body>
 					</b-card>
+					<!--<div id="node-parameters">params... here</div>-->
+				</div>
+			</b-modal>
 
-				</template>
-			</div>
-		</div>
-
-		<!-- ADD COLLECTION MODAL -->
-		<b-modal
-			v-model="showAddCollection"
-			title="Add collection"
-			header-bg-variant="info"
-			okTitle="Create"
-			@ok="createCollection">
-			<div >
-				<b-input placeholder="collection title" v-model="new_collection"/>
-			</div>
-		</b-modal>
-
-		<!-- ADD NODED MODAL -->
-		<b-modal
-			v-if="current_repo_node"
-			v-model="showAddNode"
-			@shown="initNodeParams"
-			:title="current_repo_node.title"
-			header-bg-variant="info"
-			okTitle="Create node"
-			@ok="createNode">
-			<div >
-				<p>{{current_repo_node.description}}</p>
-				<h5>Node parameters</h5>
-				<b-card id="node-parameters">
-					<b-card-body v-html="current_repo_node.views.params"></b-card-body>
-				</b-card>
-				<!--<div id="node-parameters">params... here</div>-->
-			</div>
-		</b-modal>
-
-  </div>
+		</b-card-body>
+	</b-card>
 </template>
 
 <script>
@@ -181,9 +181,9 @@ export default {
 			subtypes: {},
 			verbose: {
 				"source": {
-					"collection": "Read data from collection",
+					"file": "Read data from file",
 					"web": "Read data from web",
-					"file": "Read data from file"
+					"collection": "Read data from collection",
 				},
 				"process": {
 					"strings": "String operations",

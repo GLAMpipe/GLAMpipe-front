@@ -2,14 +2,27 @@
 .bg-info {
     background-color: #637995 !important;
 }
+.main-header {
+	background-color: #6e7388;
+
+}
+h1,h2,h3,h4,h5 {
+	font-weight: 300 !important;
+}
+#app {
+	font-family: 'Open Sans', sans-serif;
+}
+.navbar {
+	padding:0px !important;
+}
 
 </style>
 
 <template>
 	<div id="app">
-		<b-navbar type="dark" variant="info" >
+		<b-navbar type="dark" class="main-header">
 
-			<b-link :to="{ path: '/'}"><b-navbar-brand >GLAMpipe </b-navbar-brand></b-link>
+			<b-link :to="{ path: '/'}"><b-navbar-brand >&nbsp;GLAMpipe </b-navbar-brand></b-link>
 
 			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:20%">
 

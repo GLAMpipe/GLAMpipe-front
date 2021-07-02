@@ -172,7 +172,7 @@ settingaction label {
 <template>
 	<b-container fluid v-if="data && $G.current_collection">
 		<div>
-			<b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button>
+			<!-- <b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button> -->
 			<b-sidebar id="sidebar-1" title="Debug" shadow>
 				<div class="px-3 py-2">
 					<p>
@@ -193,50 +193,60 @@ settingaction label {
 				</div>
 			</b-sidebar>
 		</div>
-		<b-navbar toggleable="m" >
-			<b-navbar-brand>Documents of <i>{{$G.current_collection.title}}</i> <span>({{data.total}})</span></b-navbar-brand>
-			<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
-			<b-navbar-toggle target="nav-table"><b-icon icon="caret-down"></b-icon> <b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
 
-			<b-collapse id="nav-table" is-nav @shown="populateTabs">
-				<b-tabs content-class="mt-3" >
-
-					<b-tab title="Fields" active>
-						<b-container v-if="schema" class="bv-example-row mb-3">
-							<b-button @click="uncheck()">uncheck all</b-button>
-							<b-row cols="3">
-								<template v-for="key in schema.keys"  >
-									<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
-								</template>
-							</b-row>
-						</b-container>
-					</b-tab>
-
-					<b-tab title="Filter">
-						<b-row>
-						<b-col v-if="schema">
-							<b-form-select v-model="query_keys" :options="schema.keys"></b-form-select>
-						</b-col>
-						<b-col>
-							<b-form-select v-model="query_types" :options="query_type_list"></b-form-select>
-						</b-col>
-						<b-col><b-form-input/></b-col>
-						</b-row>
-					</b-tab>
-				</b-tabs>
-			</b-collapse>
-		</b-navbar>
-
-		<div v-if="data && data.total == 0" class="alert alert-info">No documents found! <br>
-			<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
-		</div>
-
-		<!-- DATA TABLE -->
-		<b-table small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
-			<template #cell()="data">
-				<div v-html="renderCell(data.value)"></div>
+		<b-card
+			header-tag="header"
+			>
+			<template #header>
+				<h5>Documents of {{$G.current_collection.title}} ({{data.total}})<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle></h5>
 			</template>
-		</b-table>
+			<b-card-body>
+
+				<b-collapse id="nav-table" is-nav @shown="populateTabs">
+					<b-tabs content-class="mt-3" >
+
+						<b-tab title="Fields" active>
+							<b-container v-if="schema" class="bv-example-row mb-3">
+								<b-button @click="uncheck()">uncheck all</b-button>
+								<b-row cols="3">
+									<template v-for="key in schema.keys"  >
+										<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
+									</template>
+								</b-row>
+							</b-container>
+						</b-tab>
+
+						<b-tab title="Filter">
+							<b-row>
+							<b-col v-if="schema">
+								<b-form-select v-model="query_keys" :options="schema.keys"></b-form-select>
+							</b-col>
+							<b-col>
+								<b-form-select v-model="query_types" :options="query_type_list"></b-form-select>
+							</b-col>
+							<b-col><b-form-input/></b-col>
+							</b-row>
+						</b-tab>
+					</b-tabs>
+				</b-collapse>
+
+				<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
+
+				<div v-if="data && data.total == 0" class="alert alert-info">No documents found! <br>
+					<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
+				</div>
+
+				<!-- DATA TABLE -->
+				<b-table small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
+					<template #cell()="data">
+						<div v-html="renderCell(data.value)"></div>
+					</template>
+				</b-table>
+			</b-card-body>
+
+		</b-card>
+
+
 
 	</b-container>
 
@@ -408,9 +418,9 @@ export default {
 			// render objects
 			}  else {
 				if(index != null)
-					html += "<div data-index="+index+" class='object-cell'>["+index+"] subdocument</div>";
+					html += "<div data-index="+index+" class='object-cell'>["+index+"] " + JSON.stringify(data) + " </div>";
 				else
-					html += "<div class='object-cell'>subdocument</div><div class='object-string'>as string</div>";
+					html += "<div class='object-cell'>" + JSON.stringify(data) + "</div><div class='object-string'>as string</div>";
 			}
 			return html;
 		},

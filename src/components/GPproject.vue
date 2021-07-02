@@ -1,7 +1,5 @@
 <style>
-.sideBar {
-	background-color: rgb(244, 246, 247);
-}
+
 </style>
 
 

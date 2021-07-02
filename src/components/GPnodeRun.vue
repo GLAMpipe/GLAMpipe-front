@@ -44,7 +44,6 @@
 <script>
 import GPnodeSettings from './GPnodeSettings.vue'
 import axios from "axios"
-import $ from 'jquery'
 
 export default {
 	name: 'GPnodeRun',
@@ -54,43 +53,7 @@ export default {
 			showNodeSettings: true,
 		}
 	},
-
-	watch: {
-		'$G.current_node':function() {
-			if(this.$G.current_node) {
-				console.log('node vaihtui')
-
-
-			//	var options = ['<option>kissa</option>', '<option>koira</option>']
-			//	$("settingsblock select.dynamic-field").each(function() {
-			//		$(this).append(options.join(""))
-				//    $(this).replaceWith("<select id='" + $(this).attr("id") + "' name='" + $(this).attr("name") + "' class='dynamic-field'><option value=''>choose field</option>"+options.join("")+"</select>");
-			//	})
-			}
-
-			//this.initScript()
-
-		}
-	},
 	methods: {
-		initScript() {
-			console.log('setting script init')
-			//var settingsScript = new Function('node', this.$G.current_node.scripts.ui_settings);
-			var settingsScript = new Function('node', '$', this.$G.current_node.scripts.ui_settings);
-			settingsScript(this.$G.current_node, $);
-			/*
-			console.log(`http://localhost:3333/api/v2/nodes/${this.$G.current_node._id}/scripts/ui_settings`)
-			this.$loadScript(`http://localhost:3333/api/v2/nodes/${this.$G.current_node._id}/scripts/ui_settings`)
-			.then(() => {
-			// Script is loaded, do something
-			console.log('script loaded')
-			})
-			.catch(() => {
-			// Failed to fetch script
-			console.log('ei')
-			});
-			*/
-		},
 		async deleteNode() {
 			console.log(this.$G.current_node.title)
 			try {
@@ -101,10 +64,6 @@ export default {
 				console.log(e)
 			}
 		}
-	},
-
-	created: function() {
-			//this.loadProject();
 	}
 }
 </script>

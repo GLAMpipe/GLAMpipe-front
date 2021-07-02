@@ -6,24 +6,34 @@
 
 <template>
 	<div class="hello">
-		<h1 class="h2">Projects</h1>
-		<b-table small striped hover :items="projects" :fields="fields">
-			<template #cell(title)="data">
-				<b-link :to="{ path: projectURL(data.item) }"> {{data.item.title}}</b-link>
-				<span class="dim"> ({{data.item.collection_count}} collections,</span>
-				<span class="dim"> {{data.item.node_count}} nodes)</span>
+		<b-card
+			header="Projects"
+			header-tag="h5"
+			>
+			<b-card-body>
 
-				<div class="font-italic">{{data.item.description}}</div>
-			</template>
-			<template #cell(remove)="data">
-				<b-icon-trash class="pointer" variant="danger" @click="openDeleteDialog(data.item)">poista</b-icon-trash>
-			</template>
-			<template #cell(star)="data">
+						<b-table small striped hover :items="projects" :fields="fields">
+							<template #cell(title)="data">
+								<b-link :to="{ path: projectURL(data.item) }"> {{data.item.title}}</b-link>
+								<span class="dim"> ({{data.item.collection_count}} collections,</span>
+								<span class="dim"> {{data.item.node_count}} nodes)</span>
 
-				<b-icon-star v-if="data.item.star != 'yes'" variant="success" @click="starProject(data.item._id)"></b-icon-star>
-				<b-icon-star-fill v-else variant="success" @click="unStarProject(data.item._id)"></b-icon-star-fill>
-			</template>
-		</b-table>
+								<div class="font-italic">{{data.item.description}}</div>
+							</template>
+							<template #cell(remove)="data">
+								<b-icon-trash class="pointer" variant="danger" @click="openDeleteDialog(data.item)">poista</b-icon-trash>
+							</template>
+							<template #cell(star)="data">
+
+								<b-icon-star v-if="data.item.star != 'yes'" variant="success" @click="starProject(data.item._id)"></b-icon-star>
+								<b-icon-star-fill v-else variant="success" @click="unStarProject(data.item._id)"></b-icon-star-fill>
+							</template>
+						</b-table>
+			</b-card-body>
+
+
+		</b-card>
+
 
 		<b-modal
 			v-model="showDelete"
