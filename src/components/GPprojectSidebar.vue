@@ -4,13 +4,20 @@
 }
 .active_node {
 	background-color: #e4e8e3;
-
 }
 .bg-info {
 	background:none !important;
 	color:black
 }
-
+.card-header {
+	background: none
+}
+.card {
+	border:none
+}
+.card-header {
+	border:none
+}
 .card-body {
 	padding:0.6rem;
 }
@@ -20,13 +27,40 @@
 #node-parameters label {
 	display:block;
 }
-
+h5. {
+	margin-top:30px
+}
+.box {
+	color: #444;
+	background-color: #FFF;
+	border-radius: 5px;
+	min-height: 50px;
+	overflow: hidden;
+	padding: 10px 5px 10px 10px;
+	padding-left: 10px;
+	margin-bottom: 10px;
+	margin-right: 20px;
+	display: -webkit-flex;
+	display: flex;
+}
+.box:hover {
+	cursor: pointer;
+	border-left: solid rgba(52,123,255,1) 10px;
+	padding-left: 10px;
+}
+.boxtitle {
+	font-weight: 400;
+	width: 240px;
+}
+.description {
+	font-weight: 300
+}
 
 
 </style>
 
 <template>
-	<b-card class="project-sidebar" v-show="showSideBar" header-tag="header">
+	<b-card class="project-sidebar" v-show="showSideBar" header-tag="header" style="background-color: #EFEFEF">
 
 		<!-- // COLLECTION LIST -->
 			<template #header>
@@ -36,7 +70,7 @@
 							<b-icon icon="caret-left"></b-icon>
 						</span>
 
-						<b-navbar-brand>Nodes for
+						<b-navbar-brand><h5>Nodes for
 							<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
 							<b-collapse id="nav-collapse" is-nav>
 								<b-navbar-nav class="ml-auto" >
@@ -44,13 +78,14 @@
 										v-for="collection in $G.current_project.collections"
 										:key="collection.name"
 										@click="setCurrentCollection(collection)">
-										<b-badge>{{collection.title}}</b-badge>
+										<li>{{collection.title}}</li>
 									</b-nav-item>
 								</b-navbar-nav>
 								<b-link @click="showAddCollection = !showAddCollection">
 									<b-icon variant="info" icon="plus-circle-fill"></b-icon>
 								</b-link>
 							</b-collapse>
+						</h5>
 
 						</b-navbar-brand>
 					</b-navbar>
@@ -66,14 +101,14 @@
 			<!-- // NODE LIST -->
 			<div id="node-nav" v-if="$G.current_project">
 				<div v-for="type in nodetypes" :key="type.key">
-					<div style="margin-top:15px"><h6 small>{{type.label}}
+					<div style="margin-top:15px"><h5 small>{{type.label}}
 
 						<!-- ADD NODE DIALOG -->
 						<b-navbar-toggle :target="`${type.key}`">
 							<b-link>
 								<b-icon icon="plus-circle"></b-icon>
 							</b-link>
-						</b-navbar-toggle></h6>
+						</b-navbar-toggle></h5>
 
 						<b-collapse :id="`${type.key}`" :ref="`${type.key}`" is-nav style="margin-bottom:2em">
 							<b-list-group>
@@ -95,13 +130,36 @@
 					</div>
 
 					<!-- LIST OF EXISTING NODES -->
+
 					<template v-if="nodes_sorted">
+						<div class="box node" @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
+							<div class="boxleft">
+
+								<div  class="title boxtitle">{{node.title}} <span v-if="node.params && node.params.out_field"> > <b>{{node.params.out_field}}</b></span></div>
+
+
+
+									<div class="description">{{node.description}} </div>
+									<template v-if="$G.current_node && $G.current_node._id == node._id">
+
+											<div v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
+												{{i}}:<br><b>{{v}}</b>
+											</div>
+
+										<b-button @click="deleteNode" variant="danger" class="float-right">delete</b-button>
+									</template>
+
+							</div>
+						</div>
+					</template>
+
+					<!--<template v-if="nodes_sorted">
 						<b-card @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
 							<template #header>
 								<h6  class="mb-0 ">{{node.title}}</h6>
 							</template>
 							<b-card-body style="padding:0.25rem" text-variant="info">
-								<!--<b-card-title>{{node.title}}</b-card-title>-->
+
 								<b-card-sub-title class="mb-2">{{node.description}}</b-card-sub-title>
 								<b-card-text v-if="$G.current_node && $G.current_node._id == node._id">
 									<table class="table b-table">
@@ -109,11 +167,11 @@
 											<td>{{i}}</td><td><b>{{v}}</b></td>
 										</tr>
 									</table>
+									<b-button @click="deleteNode" variant="danger" class="float-right">delete</b-button>
 								</b-card-text>
 							</b-card-body>
 						</b-card>
-
-					</template>
+					</template>-->
 				</div>
 			</div>
 
@@ -317,6 +375,16 @@ export default {
 			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + col_result.data.id }).catch(err => {console.log(err)})
 		},
 
+		async deleteNode() {
+			try {
+				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
+				this.$G.current_node = null
+				this.loadNodes()
+				//location.reload()
+			} catch(e) {
+				console.log(e)
+			}
+		},
 
 		setCurrentCollection(collection) {
 			if(collection) {
@@ -340,7 +408,7 @@ export default {
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
 			else  this.$G.current_node = node
-			this.$G.current_node_fields = ['dc_contributor_author', 'dc_contributor_author_lowercase']
+			//this.$G.current_node_fields = ['dc_contributor_author', 'dc_contributor_author_lowercase']
 			//this.$emit('update:current_node', this.$G.current_node)
 			//this.parseSettingsHTML()
 		},

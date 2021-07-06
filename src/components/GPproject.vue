@@ -8,7 +8,7 @@
 	<b-row>
 		<b-button v-show="!$G.showSideBar" @click="$G.showSideBar = !$G.showSideBar"><b-icon icon="caret-right"></b-icon></b-button>
 		<b-col cols="3" v-show="$G.showSideBar" class="sideBar">
-			<b-container fluid>
+			<b-container fluid style="padding-left:0px; background-color:#EFEFEF">
 				<GPprojectSidebar />
 			</b-container>
 		</b-col>

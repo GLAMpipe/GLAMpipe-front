@@ -169,8 +169,18 @@ settingaction label {
 
 </style>
 
+<style scoped>
+.card-body {
+	padding:0px
+}
+.data-header {
+	margin-left:1em;
+	margin-top:10px
+}
+</style>
+
 <template>
-	<b-container fluid v-if="data && $G.current_collection">
+	<div v-if="data && $G.current_collection">
 		<div>
 			<!-- <b-button v-b-toggle.sidebar-1>Toggle Sidebar</b-button> -->
 			<b-sidebar id="sidebar-1" title="Debug" shadow>
@@ -194,14 +204,10 @@ settingaction label {
 			</b-sidebar>
 		</div>
 
-		<b-card
-			header-tag="header"
-			>
-			<template #header>
-				<h5>Documents of {{$G.current_collection.title}} ({{data.total}})<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle></h5>
-			</template>
-			<b-card-body>
+		<div>
 
+			<div class="data-header">
+				<h5 class="float-left data-title">Documents of {{$G.current_collection.title}} ({{data.total}})<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle></h5>
 				<b-collapse id="nav-table" is-nav @shown="populateTabs">
 					<b-tabs content-class="mt-3" >
 
@@ -232,23 +238,23 @@ settingaction label {
 
 				<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
 
-				<div v-if="data && data.total == 0" class="alert alert-info">No documents found! <br>
+			</div>
+				<div v-if="data && data.total == 0" class="alert alert-info">No documents found from collection! <br>
 					<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
 				</div>
 
 				<!-- DATA TABLE -->
-				<b-table small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
+				<b-table v-else small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
+					<template #head()="data">
+						<span class="text-info">{{ data.label.toUpperCase() }}</span>
+					</template>
+
 					<template #cell()="data">
 						<div v-html="renderCell(data.value)"></div>
 					</template>
 				</b-table>
-			</b-card-body>
-
-		</b-card>
-
-
-
-	</b-container>
+			</div>
+	</div>
 
 </template>
 
@@ -308,8 +314,8 @@ export default {
 			if(from.query.collection != to.query.collection) this.getUserFields()
 			this.loadData()
 		},
-		"$G.current_node"() {
-			if(this.$G.current_node && this.$G.current_node.type == 'process') this.current_fields = this.getNodeFields(this.$G.current_node)
+		async "$G.current_node"() {
+			if(this.$G.current_node && this.$G.current_node.type == 'process') this.current_fields = await this.getNodeFields(this.$G.current_node)
 			else this.current_fields = this.selected_fields
 		},
 		"$store.state.running_node"() {
@@ -318,12 +324,17 @@ export default {
 	},
 
 	methods: {
-		getNodeFields(node) {
+		async getNodeFields(node) {
 			var fields = []
 			if(node.params) {
 				if(node.params.in_field) fields.push(node.params.in_field)
 				if(node.params.out_field) fields.push(node.params.out_field)
-				return fields
+				var userfields = await this.getUserFields()
+				console.log(fields)
+				console.log(userfields)
+				var p = [...new Set([...fields,...userfields])]
+				console.log(p)
+				return  [...new Set([...fields,...userfields])]
 			}
 		},
 		async getUserFields() {
@@ -335,7 +346,11 @@ export default {
 				fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
 				axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: fields})
 			}
+			return fields
+		},
 
+		async setFields() {
+			var fields = await this.getUserFields()
 			this.selected_fields = fields
 			this.current_fields = fields
 			this.table_fields = fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
@@ -391,7 +406,9 @@ export default {
 						html += "<div class='"+className+"'>["+index+"] <a target='_blank' href='"+data+"'>" + data + "</a></div>";
 					else
 						html += "<div class='"+className+"'> <a target='_blank' href='"+data+"'>" + data + "</a></div>";
-
+				// html img tags
+				} else if(typeof data == "string" && data.match(/<img src/) && !this.editMode) {
+					html = data
 				// render errors
 				} else if(typeof data == "string" && data.match("^AAAA_error")) {
 					data = data.replace("AAAA_error:","");
@@ -435,6 +452,7 @@ export default {
 			if(field.includes('year')) return field
 			if(field.includes('issued')) return field
 			if(field.includes('date')) return field
+			if(field.includes('url')) return field
 			if(field.includes('pvm')) return field
 			return false
 		},
@@ -474,7 +492,7 @@ export default {
 		if(this.$route.query.collection) {
 			console.log('ROUTE on')
 			this.collection = this.$route.query.collection
-			await this.getUserFields()
+			await this.setFields()
 		}
 	}
 }

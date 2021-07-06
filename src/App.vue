@@ -25,7 +25,6 @@ h1,h2,h3,h4,h5 {
 			<b-link :to="{ path: '/'}"><b-navbar-brand >&nbsp;GLAMpipe </b-navbar-brand></b-link>
 
 			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:20%">
-
 				<span >
 					<template v-if="showTitleEdit">
 						<b-input v-model="$G.current_project.title"/>
@@ -80,8 +79,13 @@ export default {
 
 	created: async function() {
 		console.log('App created')
-		var user = await axios.get('/api/v2/user')
-		this.$G.user = user.data
+		try {
+			var user = await axios.get('/api/v2/user')
+			this.$G.user = user.data
+		} catch(e) {
+			console.log('GLAMpipe is not responding')
+			this.error = 'GLAMpipe is not responding'
+		}
 	}
 }
 </script>

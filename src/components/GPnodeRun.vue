@@ -19,9 +19,8 @@
 					<GPnodeSettings></GPnodeSettings>
 				</b-tab>
 
-				<b-tab title="Delete">
-					<div class="alert alert-warning">When you delete a node, also fields created by that node are deleted.</div>
-					<span @click="deleteNode" title="delete node"><b-badge variant="danger"><b-icon icon="trash"></b-icon> delete</b-badge></span>
+				<b-tab title="Help" v-if="$G.current_node.views.help">
+					<div v-html="$G.current_node.views.help"></div>
 				</b-tab>
 
 				<b-tab title="debug">
@@ -43,26 +42,13 @@
 
 <script>
 import GPnodeSettings from './GPnodeSettings.vue'
-import axios from "axios"
 
 export default {
 	name: 'GPnodeRun',
 	components: {GPnodeSettings},
 	data() {
 		return {
-			showNodeSettings: true,
-		}
-	},
-	methods: {
-		async deleteNode() {
-			console.log(this.$G.current_node.title)
-			try {
-				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
-				this.$G.current_node = null
-				location.reload()
-			} catch(e) {
-				console.log(e)
-			}
+			showNodeSettings: false,
 		}
 	}
 }

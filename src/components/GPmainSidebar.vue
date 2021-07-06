@@ -7,7 +7,7 @@
 			<b-card-text>Project contains your data, transforms, downloads etc..</b-card-text>
 			<b-form-input v-model="title" placeholder="project title"></b-form-input><br>
 			<b-form-input v-model="description" placeholder="description (optional)"></b-form-input><br>
-			<b-form-input v-model="collection" placeholder="first collection name (optional)"></b-form-input><br>
+			<b-form-input v-model="collection" placeholder="collection name (optional)"></b-form-input><br>
 			<b-button href="#" variant="primary" @click="createProject">Create project</b-button>
 		</b-card>
 
