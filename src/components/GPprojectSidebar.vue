@@ -3,7 +3,8 @@
   cursor: pointer;
 }
 .active_node {
-	background-color: #e4e8e3;
+	background-color: #d6ddf5;
+	border-left: solid rgba(52,123,255,1) 10px;
 }
 .bg-info {
 	background:none !important;
@@ -32,7 +33,6 @@ h5. {
 }
 .box {
 	color: #444;
-	background-color: #FFF;
 	border-radius: 5px;
 	min-height: 50px;
 	overflow: hidden;
@@ -40,12 +40,12 @@ h5. {
 	padding-left: 10px;
 	margin-bottom: 10px;
 	margin-right: 20px;
-	display: -webkit-flex;
-	display: flex;
+
+
 }
 .box:hover {
 	cursor: pointer;
-	border-left: solid rgba(52,123,255,1) 10px;
+	background-color: #e4e8e3;
 	padding-left: 10px;
 }
 .boxtitle {
@@ -101,7 +101,7 @@ h5. {
 			<!-- // NODE LIST -->
 			<div id="node-nav" v-if="$G.current_project">
 				<div v-for="type in nodetypes" :key="type.key">
-					<div style="margin-top:15px"><h5 small>{{type.label}}
+					<div style="margin-top:25px"><h5 small>{{type.label}}
 
 						<!-- ADD NODE DIALOG -->
 						<b-navbar-toggle :target="`${type.key}`">
@@ -132,12 +132,11 @@ h5. {
 					<!-- LIST OF EXISTING NODES -->
 
 					<template v-if="nodes_sorted">
-						<div class="box node" @click="setCurrentNode(node)" v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
+						<div class="box node"  v-for="node in nodes_sorted[type.key]" :key="`${type.key}-${node._id}`" :class = "$G.current_node && $G.current_node._id == node._id?'active_node pointer':'else_class pointer'" header="Info">
 							<div class="boxleft">
 
-								<div  class="title boxtitle">{{node.title}} <span v-if="node.params && node.params.out_field"> > <b>{{node.params.out_field}}</b></span></div>
-
-
+								<div @click="setCurrentNode(node)">
+									<div class="title boxtitle"><b>{{node.title}}</b></div>
 
 									<div class="description">{{node.description}} </div>
 									<template v-if="$G.current_node && $G.current_node._id == node._id">
@@ -145,9 +144,12 @@ h5. {
 											<div v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
 												{{i}}:<br><b>{{v}}</b>
 											</div>
-
-										<b-button @click="deleteNode" variant="danger" class="float-right">delete</b-button>
 									</template>
+								</div>
+								<div v-if="$G.current_node && $G.current_node._id == node._id">
+									<b-icon  icon="x-circle" @click="deleteNode" variant="danger" class="float-right">delete</b-icon>
+									<b-icon icon="gear" variant="info" @click="$G.showNodeSettings = !$G.showNodeSettings" title="Show settings & Run"></b-icon>
+								</div>
 
 							</div>
 						</div>
@@ -405,6 +407,7 @@ export default {
 		},
 
 		setCurrentNode(node) {
+			console.log('setting current node to ' + node.nodeid)
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
 			else  this.$G.current_node = node

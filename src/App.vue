@@ -3,9 +3,10 @@
     background-color: #637995 !important;
 }
 .main-header {
-	background-color: #6e7388;
+	background-color: #2c3557;
 
 }
+
 h1,h2,h3,h4,h5 {
 	font-weight: 300 !important;
 }
@@ -24,7 +25,7 @@ h1,h2,h3,h4,h5 {
 
 			<b-link :to="{ path: '/'}"><b-navbar-brand >&nbsp;GLAMpipe </b-navbar-brand></b-link>
 
-			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:20%">
+			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem">
 				<span >
 					<template v-if="showTitleEdit">
 						<b-input v-model="$G.current_project.title"/>
@@ -33,13 +34,13 @@ h1,h2,h3,h4,h5 {
 					</template>
 					<template v-else>
 						<b> {{$G.current_project.title}}</b>
-						<b-icon @click="showTitleEdit = true" icon="pen" style="margin-left:0.5em"></b-icon>
+						<!-- <b-icon @click="showTitleEdit = true" icon="pen" style="margin-left:0.5em"></b-icon> -->
 					</template>
 				</span>
 			</b-navbar-brand>
 			<b-navbar-brand v-if="$G.current_project" style="font-size:1.0rem; margin-left:10px">
 				<span ><i>{{$G.current_project.description}}</i></span>
-				<b-icon icon="pen" style="margin-left:0.5em">></b-icon>
+				<!-- <b-icon icon="pen" style="margin-left:0.5em">></b-icon> -->
 			</b-navbar-brand>
 
 			<b-navbar-brand v-if="$store.state.running_node">

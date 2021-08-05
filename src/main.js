@@ -153,11 +153,16 @@ var shared = new Vue({
 		current_node: null,
 		current_node_fields: [],
 		visible_fields: [],
-		showSideBar: true
+		running_single: false,
+		showSideBar: true,
+		showNodeSettings: false,
+		editorContent:''
 	},
 	methods: {
 
-		getUserFields(collection_name) {
+		async getUserFields(collection_name) {
+			var user_fields = await axios.get('/api/v2/user')
+			this.user.fields = user_fields.data.fields
 			if(this.user && this.user.fields) {
 				var fields = this.user.fields.find(fields => fields.collection === collection_name)
 				if(fields) return fields.fields

@@ -40,7 +40,7 @@ export default {
 				this.title = ''
 				this.description = ''
 				this.collection = ''
-				this.$router.push({ path: `/projects/${result.data._id}?collection=`})
+				this.$router.push({ path: `/projects/${result.data._id}?collection=${result.data.collection.id}`})
 			} catch(e) {
 				alert(e)
 			}

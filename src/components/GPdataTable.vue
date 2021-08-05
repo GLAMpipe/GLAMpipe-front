@@ -207,11 +207,12 @@ settingaction label {
 		<div>
 
 			<div class="data-header">
-				<h5 class="float-left data-title">Documents of {{$G.current_collection.title}} ({{data.total}})<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle></h5>
+				<h5 class="float-left data-title">Documents of {{$G.current_collection.title}} ({{data.total}})
+					<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
+					<b-navbar-toggle target="nav-search"><b-icon icon="search"></b-icon></b-navbar-toggle>
+				</h5>
 				<b-collapse id="nav-table" is-nav @shown="populateTabs">
-					<b-tabs content-class="mt-3" >
 
-						<b-tab title="Fields" active>
 							<b-container v-if="schema" class="bv-example-row mb-3">
 								<b-button @click="uncheck()">uncheck all</b-button>
 								<b-row cols="3">
@@ -220,26 +221,29 @@ settingaction label {
 									</template>
 								</b-row>
 							</b-container>
-						</b-tab>
+					</b-collapse>
+					<b-collapse id="nav-search" is-nav @shown="populateTabs">
 
-						<b-tab title="Filter">
 							<b-row>
 							<b-col v-if="schema">
-								<b-form-select v-model="query_keys" :options="schema.keys"></b-form-select>
+								<b-form-select v-model="query_key" :options="schema.keys"></b-form-select>
 							</b-col>
 							<b-col>
-								<b-form-select v-model="query_types" :options="query_type_list"></b-form-select>
+								<b-form-select v-model="query_type" :options="query_type_list" ></b-form-select>
 							</b-col>
-							<b-col><b-form-input/></b-col>
+							<b-col><b-form-input v-model="query_value"/></b-col>
 							</b-row>
-						</b-tab>
-					</b-tabs>
-				</b-collapse>
 
-				<b-pagination-nav size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
+							<b-button @click="loadData()">Search</b-button>
+					</b-collapse>
 
+
+
+				<b-pagination-nav v-if="data && data.total != 0" size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
+
+				<b-badge v-if="query_key && query_value">FILTER: {{query_key}}: {{query_value}}</b-badge>
 			</div>
-				<div v-if="data && data.total == 0" class="alert alert-info">No documents found from collection! <br>
+				<div v-if="data && data.total == 0 && this.query_value == ''" class="alert alert-info">No documents found from collection! <br>
 					<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
 				</div>
 
@@ -247,6 +251,13 @@ settingaction label {
 				<b-table v-else small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
 					<template #head()="data">
 						<span class="text-info">{{ data.label.toUpperCase() }}</span>
+					</template>
+
+					<template #cell(action)="data">
+						<div v-if="$G.showNodeSettings">
+							<div v-if="$G.running_single !== data.item._id" title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary"><b-icon icon="play"/>{{data.value}}</b-button></div>
+							<div v-else title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary">running...</b-button></div>
+						</div>
 					</template>
 
 					<template #cell()="data">
@@ -278,9 +289,10 @@ export default {
 			table_fields: [],
 			selected_fields: [],
 			current_fields: [],
-			query_keys: [],
-			query_types: [],
-			query_type_list: ['is exactly', 'contains'],
+			query_key: '',
+			query_type: '_regex_:',
+			query_type_list: [{text:'is exactly', value:''}, {text:'contains', value:'_regex_:'}],
+			query_value: '',
 			maxArrayLenghtDisplay: 10
 		}
 	},
@@ -303,7 +315,12 @@ export default {
 			axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: this.selected_fields})
 		},
 		current_fields() {
-			this.table_fields = this.current_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}})
+			this.table_fields = []
+			if(this.$G.current_node && this.$G.current_node.type == 'process') this.table_fields.push({'key':'action', 'label':'action', 'sortable': false})
+			this.table_fields = this.table_fields.concat(this.current_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}}))
+			console.log(this.table_fields)
+			console.log(typeof this.table_fields)
+
 			this.loadData()
 		},
 		async $route(from, to) {
@@ -311,7 +328,7 @@ export default {
 			console.log(from)
 			console.log(to)
 			// if we changed collection, we must set user fields
-			if(from.query.collection != to.query.collection) this.getUserFields()
+			if(from.query.collection != to.query.collection) this.setFields()
 			this.loadData()
 		},
 		async "$G.current_node"() {
@@ -332,21 +349,23 @@ export default {
 				var userfields = await this.getUserFields()
 				console.log(fields)
 				console.log(userfields)
-				var p = [...new Set([...fields,...userfields])]
-				console.log(p)
+				//var p = [...new Set([...fields,...userfields])]
+				//console.log(p)
 				return  [...new Set([...fields,...userfields])]
 			}
 		},
 		async getUserFields() {
 			await this.loadSchema()
-			var fields = this.$G.getUserFields(this.$route.query.collection)
+			var fields = await this.$G.getUserFields(this.$route.query.collection)
+			let filteredFields = fields.filter(el => this.schema.keys.includes(el)); // user keys must also exist in schema
 			// if user fields does not exist, then create them
-			if(!fields || fields.length == 0) {
+			if(!filteredFields || fields.length == 0) {
 				console.log('User fields not found')
 				fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
 				axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: fields})
 			}
-			return fields
+			return [...new Set(filteredFields)];
+			//return filteredFields
 		},
 
 		async setFields() {
@@ -357,6 +376,12 @@ export default {
 		},
 
 		async loadData() {
+			// search
+			let search_query = ''
+			if(this.query_value && this.query_key) {
+				search_query = `&${this.query_key}=${this.query_type}${this.query_value}`
+			}
+
 			var sort_str = ''
 			if(this.sort) sort_str = `&sort=${this.sort.sortBy}&reverse=${this.sort.sortDesc ? '1':'0'}`
 			// did collection change?
@@ -367,7 +392,7 @@ export default {
 			if(this.$route.query.page) this.dataStart = parseInt(this.$route.query.page) * this.dataLimit - this.dataLimit
 			else this.dataStart = 0
 			//this.getVisibleFields()
-			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.current_fields.join(',')}${sort_str}`)
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/docs?skip=${this.dataStart}&keys=${this.current_fields.join(',')}${sort_str}${search_query}`)
 			this.data = response.data
 			this.pageCount = Math.ceil(this.data.total/this.dataLimit)
 			if(this.pageCount === 0) this.pageCount = 1
@@ -437,7 +462,8 @@ export default {
 				if(index != null)
 					html += "<div data-index="+index+" class='object-cell'>["+index+"] " + JSON.stringify(data) + " </div>";
 				else
-					html += "<div class='object-cell'>" + JSON.stringify(data) + "</div><div class='object-string'>as string</div>";
+					html += "<div class='object-cell'>" + this.nl2br(JSON.stringify(data, null, 2).substring(0,100),key) + " ...</div>"
+					html += "<div class='object-string'>as string</div>";
 			}
 			return html;
 		},

@@ -1,5 +1,5 @@
 
-/* ================================= 
+/* =================================
   Table of content
 ==================================== */
 /*
@@ -12,37 +12,35 @@
 	3. Event
 	4. Things to do
 	5. Destinations
-	6. 
+	6.
 5. Media Queries
 
 */
-/* ================================= 
-  Color Palettes 
+/* =================================
+  Color Palettes
 ==================================== */
 
 
 
-	/* 
+	/*
 		Dark Blue	: #2C3E50;
 		Dark Yellow : #FFCC00
 		Light Gray 	: #ECF0F1;
 	*/
 
-/* ================================= 
-  Google fonts
-==================================== */
-
-@import url("https://fonts.googleapis.com/css?family=Kaushan+Script");
 
 
-/* ================================= 
+
+/* =================================
   Base Element Styles
 ==================================== */
-
+.text-info {
+	color: #007bff !important;
+}
 a{
 
 	text-decoration: none;
-	
+
 }
 
 body{
@@ -55,13 +53,13 @@ h5{
 	font-size: 0.9em;
 	font-weight: 600;
 }
-/* ================================= 
+/* =================================
   Base Heading Styles
 ==================================== */
 
 section h3 {
 
-	
+
 	font-weight: 400;
 	color:#2C3E50;
 	text-align: center;
@@ -77,7 +75,7 @@ p{
 }
 
 
-/* ================================= 
+/* =================================
   Base Layout Styles
 ==================================== */
 
@@ -113,7 +111,7 @@ p{
 
 	width:80%;
 	margin:0 auto;
-	
+
 }
 
 section{
@@ -126,7 +124,7 @@ section{
 
 #navbar-top-custom{
 
-	
+
 	height:100%;
 
 }
@@ -234,7 +232,7 @@ section{
 	top:35%;
 	text-align:center;
   	z-index: 1;
-  	
+
   	width:100%;
   	color:#fff;
   	font-family:'Kaushan Script', cursive;;
@@ -270,7 +268,7 @@ section{
 	padding-bottom:20px;
 	background-color: #2C3E50;
 	color:#FFF;
-	
+
 }
 .package-card .card-img-top{
 
@@ -298,7 +296,7 @@ section{
 }
 
 .package-menu li{
-	
+
 	color: #FFCC00;
 	text-align: center;
 	border-bottom: 1px dotted #FFF;
@@ -308,13 +306,13 @@ section{
 }
 
 .package-intro{
-	
+
 	padding:15px 20px;
 	text-align: justify;
 }
 
 .btn-price{
-	
+
 	background-color: #FFCC00;
 	color:#2C3E50;
 	width:150px;
@@ -410,7 +408,7 @@ section{
 	transition:all 0.3s ease;
 }
 .things-to-do-heading{
-	
+
 
 	position:absolute;
 	opacity:0;
@@ -479,7 +477,7 @@ section{
 	top:0;
 	left:0;
 	transition:all 0.3s ease-out;
-		
+
 
 	}
 
@@ -545,7 +543,7 @@ section{
 .destination-wrapper:hover .destination-thumbnail{
 
 	transform:scale(1.2);
-	
+
 }
 .destination-banner{
 
@@ -562,7 +560,7 @@ section{
 	transition:all 0.3s ease-in;
 }
 
-	
+
 
 /* ---- Subscription ---- */
 
@@ -594,7 +592,7 @@ button.addon-btn{
 .footer-top ul li{
 
 	list-style-type:none;
-	font-size:0.8em; 
+	font-size:0.8em;
 	padding:0.5em 0;
 
 }
@@ -616,7 +614,7 @@ button.addon-btn{
 
 
 .footer-bottom{
-	
+
 	margin: 30px 0;
 	display: flex;
 	flex-direction:row;
@@ -659,7 +657,7 @@ button.addon-btn{
 
 
 
-/* ================================= 
+/* =================================
   Utility styles
 ==================================== */
 
@@ -671,7 +669,7 @@ button.addon-btn{
 }
 
 
-/* ================================= 
+/* =================================
   Page specific
 ==================================== */
 
@@ -682,14 +680,14 @@ button.addon-btn{
 
 
 
-/* ================================= 
+/* =================================
   Media Queries
 ==================================== */
 
 
 
 /* ---- Small devices (landscape phones, 576px and up) ---- */
-@media (min-width: 576px) { 
+@media (min-width: 576px) {
 
 	.footer-bottom .footer-images,.copyright{
 
@@ -712,7 +710,7 @@ button.addon-btn{
 }
 
 /* ----  Medium devices (tablets, 768px and up) ---- */
-@media (min-width: 768px) { 
+@media (min-width: 768px) {
 
 	/*---- navbar logo to appear above tablet device ----*/
 
@@ -739,21 +737,21 @@ button.addon-btn{
 
 	.footer-logo{
 
-	
+
 		vertical-align: top;
 		width:150px;
 		height:60px;
 	}
 
-	
+
 
 	.footer-bottom .footer-images li{
-	
+
 		list-style-type: none;
 		display: inline-block;
 	}
 
-	
+
 
 
  }
@@ -781,7 +779,7 @@ button.addon-btn{
 
 
 .icon-cube{
-	
+
 	position: relative;
 	height:80px;
 	width:80px;
@@ -790,7 +788,7 @@ button.addon-btn{
 	margin:10px;
 	opacity:0.8;
 	overflow: hidden;
-	
+
 
 }
 
@@ -823,9 +821,9 @@ button.addon-btn{
 }
 
 .icon-pane{
-	
+
 	z-index: 7;
-	
+
 }
 
 .left-panel .icon-cube{
@@ -845,7 +843,7 @@ button.addon-btn{
 }
 
 .icon-cube:hover .cube-slider {
-	
+
 	transform: translateY(100px);
 
 }
@@ -865,12 +863,12 @@ button.addon-btn{
 
 
 /* ---- Large devices (desktops, 992px and up) ---- */
-@media (min-width: 992px) { 
+@media (min-width: 992px) {
 
 	#navbar-top-custom .navbar-nav{
 
 		margin-left:50px;
-}	
+}
 
 
 
@@ -878,7 +876,7 @@ button.addon-btn{
 }
 
 /* ---- Extra large devices (large desktops, 1200px and up) ---- */
-@media (min-width: 1200px) { 
+@media (min-width: 1200px) {
 
 	#navbar-top-custom .navbar-nav{
 
@@ -890,4 +888,3 @@ button.addon-btn{
 }
 
 }
-
