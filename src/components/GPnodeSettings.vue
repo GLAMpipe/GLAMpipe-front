@@ -110,7 +110,8 @@ export default {
 			}
 		},
 
-		editorInit() {
+		editorInit(editor) {
+			editor.setFontSize(16)
 			require('brace/ext/language_tools') //language extension prerequsite...
 			require('brace/mode/html')
 			require('brace/mode/javascript')    //language

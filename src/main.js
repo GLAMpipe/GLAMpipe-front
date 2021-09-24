@@ -109,7 +109,7 @@ const store = new Vuex.Store({
 
 Vue.use(new VueSocketIO({
     debug: true,
-    connection: 'http://localhost:8080',
+    connection: '',
     vuex: {
         store,
         actionPrefix: 'SOCKET_',
@@ -166,8 +166,8 @@ var shared = new Vue({
 			if(this.user && this.user.fields) {
 				var fields = this.user.fields.find(fields => fields.collection === collection_name)
 				if(fields) return fields.fields
-				else return null
-			} else return null
+				else return []
+			} else return []
 		},
 		updateUserFields(fields) {
 			this.visible_fields = fields

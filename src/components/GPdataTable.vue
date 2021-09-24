@@ -31,14 +31,14 @@ setting {
 	font-size: 13px;
 	font-weight:300;
 	color:#444;
-	background-color: #444;
+
 	padding: 0px;
 }
 
 
 settingscontainer {
 	display:block;
-	background-color: rgba(255,255,255,1);
+
 	margin-bottom:1px;
 }
 
@@ -99,7 +99,7 @@ submitblock {
 setting {
    display: flex;
    width: 100%;
-   background-color: #efefef;
+   border: 1px solid #efefef;
    margin: 7px 20px;
    padding: 10px;
    border-radius: 5px;
@@ -207,64 +207,72 @@ settingaction label {
 		<div>
 
 			<div class="data-header">
-				<h5 class="float-left data-title">Documents of {{$G.current_collection.title}} ({{data.total}})
-					<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill"></b-icon></b-navbar-toggle>
-					<b-navbar-toggle target="nav-search"><b-icon icon="search"></b-icon></b-navbar-toggle>
+				<h5 class="float-left data-title"><span v-if="filter_query_badge">[Filtered]</span> Documents of {{$G.current_collection.title}} ({{data.total}})
+					<b-navbar-toggle target="nav-table"><b-icon icon="gear-fill" variant="primary" title="select visible fields"></b-icon></b-navbar-toggle>
+					<b-navbar-toggle target="nav-search"><b-icon icon="search" variant="primary" title="search"></b-icon></b-navbar-toggle>
 				</h5>
-				<b-collapse id="nav-table" is-nav @shown="populateTabs">
-
-							<b-container v-if="schema" class="bv-example-row mb-3">
-								<b-button @click="uncheck()">uncheck all</b-button>
-								<b-row cols="3">
-									<template v-for="key in schema.keys"  >
-										<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
-									</template>
-								</b-row>
-							</b-container>
-					</b-collapse>
-					<b-collapse id="nav-search" is-nav @shown="populateTabs">
-
-							<b-row>
-							<b-col v-if="schema">
-								<b-form-select v-model="query_key" :options="schema.keys"></b-form-select>
-							</b-col>
-							<b-col>
-								<b-form-select v-model="query_type" :options="query_type_list" ></b-form-select>
-							</b-col>
-							<b-col><b-form-input v-model="query_value"/></b-col>
-							</b-row>
-
-							<b-button @click="loadData()">Search</b-button>
-					</b-collapse>
-
-
-
 				<b-pagination-nav v-if="data && data.total != 0" size="sm" align="right" :link-gen="linkGen" :number-of-pages="pageCount" use-router first-number last-number></b-pagination-nav>
-
-				<b-badge v-if="query_key && query_value">FILTER: {{query_key}}: {{query_value}}</b-badge>
 			</div>
-				<div v-if="data && data.total == 0 && this.query_value == ''" class="alert alert-info">No documents found from collection! <br>
-					<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
-				</div>
 
-				<!-- DATA TABLE -->
-				<b-table v-else small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
-					<template #head()="data">
-						<span class="text-info">{{ data.label.toUpperCase() }}</span>
-					</template>
+			<b-collapse id="nav-table" is-nav @shown="populateTabs">
+				<b-container v-if="schema" class="bv-example-row mb-3">
+					<b-button @click="uncheck()">uncheck all</b-button>
+					<b-row cols="3">
+						<template v-for="key in schema.keys"  >
+							<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
+						</template>
+					</b-row>
+				</b-container>
+			</b-collapse>
 
-					<template #cell(action)="data">
-						<div v-if="$G.showNodeSettings">
-							<div v-if="$G.running_single !== data.item._id" title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary"><b-icon icon="play"/>{{data.value}}</b-button></div>
-							<div v-else title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary">running...</b-button></div>
-						</div>
-					</template>
+			<b-collapse id="nav-search" is-nav @shown="populateTabs">
+					<b-row>
+					<b-col v-if="schema">
+						<b-form-select v-model="query_key" :options="schema.keys"></b-form-select>
+					</b-col>
+					<b-col>
+						<b-form-select v-model="query_type" :options="query_type_list" ></b-form-select>
+					</b-col>
+					<b-col><b-form-input v-model="query_value"/></b-col>
+					</b-row>
 
-					<template #cell()="data">
-						<div v-html="renderCell(data.value)"></div>
-					</template>
-				</b-table>
+					<b-button @click="loadData()">Search</b-button>
+			</b-collapse>
+
+
+			<h5><b-badge v-if="filter_query_badge">{{filter_query_badge}} <b-icon icon="x-circle" class="pointer" @click="resetSearch()"></b-icon></b-badge></h5>
+
+			<div v-if="data && data.total == 0 && this.query_value == ''" class="alert alert-info">No documents found from collection! <br>
+				<b-icon icon="arrow-left"></b-icon> Start importing data by clicking plus sign in <b>"Read data"</b>.
 			</div>
+
+			<!-- DATA TABLE -->
+			<b-table v-else small striped :no-local-sorting="true" :items="data.data" :fields="table_fields" @sort-changed="sortingChanged">
+				<!--
+				<template #thead-top="">
+					<b-tr>
+					<b-th variant="secondary">Type 1</b-th>
+					<b-th variant="primary" colspan="3">Type 2</b-th>
+					<b-th variant="danger">Type 3</b-th>
+					</b-tr>
+				</template>
+			-->
+				<template #head()="data">
+					<span class="text-primary">{{ data.label }}</span>
+				</template>
+
+				<template #cell(action)="data">
+					<div v-if="$G.showNodeSettings">
+						<div v-if="$G.running_single !== data.item._id" title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary"><b-icon icon="play"/>{{data.value}}</b-button></div>
+						<div v-else title="Run for this document" @click="$parent.runNodeSingle(data.item._id)"><b-button variant="primary">running...</b-button></div>
+					</div>
+				</template>
+
+				<template #cell()="data">
+					<div v-html="renderCell(data.value)"></div>
+				</template>
+			</b-table>
+		</div>
 	</div>
 
 </template>
@@ -277,22 +285,23 @@ export default {
 	name: 'GPdataTable',
 	data() {
 		return {
-			initted: false,
-			node_settings:{},
 			collection: '',
+			current_fields: [],
 			data: null,
-			schema: null,
-			pageCount: 1,
 			dataStart: 0,
 			dataLimit: 15,
+			filter_query_badge: '',
+			initted: false,
+			node_settings:{},
+			pageCount: 1,
 			sort: null,
-			table_fields: [],
 			selected_fields: [],
-			current_fields: [],
+			table_fields: [],
 			query_key: '',
 			query_type: '_regex_:',
 			query_type_list: [{text:'is exactly', value:''}, {text:'contains', value:'_regex_:'}],
 			query_value: '',
+			schema: null,
 			maxArrayLenghtDisplay: 10
 		}
 	},
@@ -316,7 +325,7 @@ export default {
 		},
 		current_fields() {
 			this.table_fields = []
-			if(this.$G.current_node && this.$G.current_node.type == 'process') this.table_fields.push({'key':'action', 'label':'action', 'sortable': false})
+			if(this.$G.current_node && (this.$G.current_node.type == 'process' || this.$G.current_node.type == 'export')) this.table_fields.push({'key':'action', 'label':'action', 'sortable': false})
 			this.table_fields = this.table_fields.concat(this.current_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}}))
 			console.log(this.table_fields)
 			console.log(typeof this.table_fields)
@@ -332,7 +341,7 @@ export default {
 			this.loadData()
 		},
 		async "$G.current_node"() {
-			if(this.$G.current_node && this.$G.current_node.type == 'process') this.current_fields = await this.getNodeFields(this.$G.current_node)
+			if(this.$G.current_node && (this.$G.current_node.type == 'process' || this.$G.current_node.type == 'export')) this.current_fields = await this.getNodeFields(this.$G.current_node)
 			else this.current_fields = this.selected_fields
 		},
 		"$store.state.running_node"() {
@@ -347,8 +356,6 @@ export default {
 				if(node.params.in_field) fields.push(node.params.in_field)
 				if(node.params.out_field) fields.push(node.params.out_field)
 				var userfields = await this.getUserFields()
-				console.log(fields)
-				console.log(userfields)
 				//var p = [...new Set([...fields,...userfields])]
 				//console.log(p)
 				return  [...new Set([...fields,...userfields])]
@@ -357,15 +364,14 @@ export default {
 		async getUserFields() {
 			await this.loadSchema()
 			var fields = await this.$G.getUserFields(this.$route.query.collection)
+
 			let filteredFields = fields.filter(el => this.schema.keys.includes(el)); // user keys must also exist in schema
 			// if user fields does not exist, then create them
 			if(!filteredFields || fields.length == 0) {
-				console.log('User fields not found')
 				fields = this.schema.keys.filter(key => this.defaultField(key) && !key.includes('__lang'))
 				axios.put(`/api/v2/user/fields`, {collection: this.$route.query.collection, fields: fields})
 			}
 			return [...new Set(filteredFields)];
-			//return filteredFields
 		},
 
 		async setFields() {
@@ -380,6 +386,10 @@ export default {
 			let search_query = ''
 			if(this.query_value && this.query_key) {
 				search_query = `&${this.query_key}=${this.query_type}${this.query_value}`
+				var filter_type = this.query_type_list.find(t => t.value == this.query_type)
+				this.filter_query_badge = `SEARCH: ${this.query_key} ${filter_type.text} ${this.query_value}`
+			} else {
+				this.filter_query_badge = ''
 			}
 
 			var sort_str = ''
@@ -460,9 +470,9 @@ export default {
 			// render objects
 			}  else {
 				if(index != null)
-					html += "<div data-index="+index+" class='object-cell'>["+index+"] " + JSON.stringify(data) + " </div>";
+					html += "<div data-index="+index+" class='object-cell'>["+index+"] " + this.nl2br(JSON.stringify(data,null,2),key) + " </div>";
 				else
-					html += "<div class='object-cell'>" + this.nl2br(JSON.stringify(data, null, 2).substring(0,100),key) + " ...</div>"
+					html += "<div class='object-cell'>" + this.nl2br(JSON.stringify(data, null, 2),key) + " ...</div>"
 					html += "<div class='object-string'>as string</div>";
 			}
 			return html;
@@ -491,11 +501,16 @@ export default {
 			return pageNum === 1 ? `?collection=${this.$route.query.collection}` : `?collection=${this.$route.query.collection}&page=${pageNum}`
 		},
 		uncheck() {
-			this.selected = ['_id']
+			this.selected_fields = ['_id']
 		},
 		sortingChanged(data) {
 			this.sort = data
 			this.loadData()
+		},
+		resetSearch() {
+				this.query_value = ''
+				this.query_key = ''
+				this.loadData()
 		},
 		nl2br(str, keyname) {
 			if(typeof str === "string") {

@@ -3,7 +3,7 @@
   cursor: pointer;
 }
 .active_node {
-	background-color: #d6ddf5;
+	background-color: #e4e8e3;
 	border-left: solid rgba(52,123,255,1) 10px;
 }
 .bg-info {
@@ -136,20 +136,25 @@ h5. {
 							<div class="boxleft">
 
 								<div @click="setCurrentNode(node)">
-									<div class="title boxtitle"><b>{{node.title}}</b></div>
 
-									<div class="description">{{node.description}} </div>
+									<div v-if="node.node_description" class="title boxtitle"><b>{{node.node_description}}</b></div>
+									<div v-else class="title boxtitle"><b>{{node.title}}</b></div>
+
+									<div v-if="node.params.file">file: {{node.params.file}}</div>
+									<div v-if="node.params.out_field"><b-icon icon="arrow-right"></b-icon> {{node.params.out_field}}</div>
+
+
+									<div v-if="node.node_description" class="description">{{node.title}} </div>
+									<div v-else class="description">{{node.description}} </div>
+									<!--
 									<template v-if="$G.current_node && $G.current_node._id == node._id">
-
 											<div v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
 												{{i}}:<br><b>{{v}}</b>
 											</div>
 									</template>
+								-->
 								</div>
-								<div v-if="$G.current_node && $G.current_node._id == node._id">
-									<b-icon  icon="x-circle" @click="deleteNode" variant="danger" class="float-right">delete</b-icon>
-									<b-icon icon="gear" variant="info" @click="$G.showNodeSettings = !$G.showNodeSettings" title="Show settings & Run"></b-icon>
-								</div>
+
 
 							</div>
 						</div>
@@ -244,6 +249,7 @@ export default {
 					"file": "Read data from file",
 					"web": "Read data from web",
 					"collection": "Read data from collection",
+					"directory": "Read data from directory"
 				},
 				"process": {
 					"strings": "String operations",
@@ -291,7 +297,10 @@ export default {
 			console.log('nodet haettu...')
 			this.nodes = response.data.nodes
 			this.sortNodes()
-			if(current) this.$G.current_node = this.nodes.find(node => node._id === current)
+			if(current) {
+				this.$G.current_node = this.nodes.find(node => node._id === current)  // "current" is set on node creation
+				this.$G.showNodeSettings = true
+			}
 
 		},
 
@@ -377,17 +386,6 @@ export default {
 			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + col_result.data.id }).catch(err => {console.log(err)})
 		},
 
-		async deleteNode() {
-			try {
-				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
-				this.$G.current_node = null
-				this.loadNodes()
-				//location.reload()
-			} catch(e) {
-				console.log(e)
-			}
-		},
-
 		setCurrentCollection(collection) {
 			if(collection) {
 				//this.$G.current_collection = collection
@@ -408,6 +406,7 @@ export default {
 
 		setCurrentNode(node) {
 			console.log('setting current node to ' + node.nodeid)
+			this.$G.showNodeSettings = false
 			if(!this.$G.current_node) this.$G.current_node = node
 			else if(this.$G.current_node && this.$G.current_node._id === node._id) this.$G.current_node = null
 			else  this.$G.current_node = node

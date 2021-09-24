@@ -25,8 +25,8 @@
 							</template>
 							<template #cell(star)="data">
 
-								<b-icon-star v-if="data.item.star != 'yes'" variant="success" @click="starProject(data.item._id)"></b-icon-star>
-								<b-icon-star-fill v-else variant="success" @click="unStarProject(data.item._id)"></b-icon-star-fill>
+								<b-icon-star v-if="data.item.star != 'yes'" class="pointer" variant="success" @click="starProject(data.item._id)"></b-icon-star>
+								<b-icon-star-fill v-else variant="success" class="pointer" @click="unStarProject(data.item._id)"></b-icon-star-fill>
 							</template>
 						</b-table>
 			</b-card-body>
@@ -44,10 +44,10 @@
 			header-bg-variant="info"
 			title="Confirm delete">
 			<div>
-
 				<div class="alert alert-danger">
 					<p><b-icon-trash variant="danger"></b-icon-trash> Delete <b>{{selected_for_delete.title}}</b>?</p>
-					<p>Removes ALL data and nodes</p></div>
+					<p>Removes ALL data and nodes</p>
+				</div>
 			</div>
 		</b-modal>
   </div>

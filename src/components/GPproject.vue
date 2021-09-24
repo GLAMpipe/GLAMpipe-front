@@ -81,6 +81,7 @@ export default {
 		},
 
 		async runNode() {
+			this.$store.commit('socket_error', null)
 			this.$store.commit('running_node', this.$G.current_node)
 			this.$store.commit('socket_finish', '')
 			this.$store.commit('socket_error', '')
@@ -95,6 +96,7 @@ export default {
 			this.$G.running_node = false
 		},
 		async runNodeSingle(id) {
+			this.$store.commit('socket_error', null)
 			console.log('runNodeSingle')
 			this.$store.commit('running_node', this.$G.current_node)
 			var settings = this.getSettingsFromUI()
