@@ -67,7 +67,7 @@ export default {
 				}
 				if(!this.$G.current_node.settings) this.$G.current_node.settings = {}
 				var settingsScript = new Function('node', '$', 'g_apipath', this.$G.current_node.scripts.ui_settings);
-				settingsScript(this.$G.current_node, $, 'http://localhost:8080/api/v2');
+				settingsScript(this.$G.current_node, $, 'api/v2');
 				this.insertSettings()
 				// script node
 				if(this.$G.current_node.nodeid.includes("script") ) {

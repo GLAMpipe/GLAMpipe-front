@@ -79,7 +79,7 @@ export default {
 			return `/projects/${project._id}?collection=${project.collections[0].name}`
 		},
 		async loadData() {
-			var response = await axios("/api/v2/projects?sort=star,title&limit=100")
+			var response = await axios("/api/v2/projects?sort=star,created&limit=100")
 			this.projects = response.data.data
 		},
 		async starProject(id) {

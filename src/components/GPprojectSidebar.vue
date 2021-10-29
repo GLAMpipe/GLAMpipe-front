@@ -10,6 +10,9 @@
 	background:none !important;
 	color:black
 }
+.node {
+	background-color: #e4e8e3;
+}
 .card-header {
 	background: none
 }
@@ -72,7 +75,7 @@ h5. {
 
 						<b-navbar-brand><h5>Nodes for
 							<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
-							<b-collapse id="nav-collapse" is-nav>
+							<b-collapse id="nav-collapse" v-model="showCollectionChooser" is-nav>
 								<b-navbar-nav class="ml-auto" >
 									<b-nav-item
 										v-for="collection in $G.current_project.collections"
@@ -90,9 +93,9 @@ h5. {
 						</b-navbar-brand>
 					</b-navbar>
 				</div>
-				<div v-else>
+				<!--<div v-else>
 					No collections yet. <b-button @click="showAddCollection" >create collection</b-button>
-				</div>
+				</div>-->
 			</template>
 			<b-card-body>
 
@@ -137,15 +140,15 @@ h5. {
 
 								<div @click="setCurrentNode(node)">
 
+
 									<div v-if="node.node_description" class="title boxtitle"><b>{{node.node_description}}</b></div>
 									<div v-else class="title boxtitle"><b>{{node.title}}</b></div>
 
 									<div v-if="node.params.file">file: {{node.params.file}}</div>
-									<div v-if="node.params.out_field"><b-icon icon="arrow-right"></b-icon> {{node.params.out_field}}</div>
+									<div v-if="node.params.out_field"><i> {{node.params.out_field}}</i></div>
 
 
-									<div v-if="node.node_description" class="description">{{node.title}} </div>
-									<div v-else class="description">{{node.description}} </div>
+
 									<!--
 									<template v-if="$G.current_node && $G.current_node._id == node._id">
 											<div v-for="(v,i) in $G.current_node.params" :key="`param${v}`">
@@ -155,6 +158,13 @@ h5. {
 								-->
 								</div>
 
+								<div v-if="$G.current_node && $G.current_node._id == node._id">
+									<div @click="setCurrentNode(node)">
+										<div v-if="node.node_description" class="description">{{node.title}} </div>
+										<div v-else class="description">{{node.description}} </div>
+									</div>
+									<b-link @click="showDeleteNode = true"><b-icon variant="danger" title="Delete node" class="float-right" icon="x-circle"></b-icon></b-link>
+								</div>
 
 							</div>
 						</div>
@@ -194,7 +204,19 @@ h5. {
 				</div>
 			</b-modal>
 
-			<!-- ADD NODED MODAL -->
+			<!-- ADD COLLECTION MODAL -->
+			<b-modal
+				v-model="showDeleteNode"
+				title="Delete node"
+				header-bg-variant="info"
+				okTitle="Delete"
+				@ok="deleteNode">
+				<div >
+					This will delete node and ALL data it produced!
+				</div>
+			</b-modal>
+
+			<!-- ADD NODE MODAL -->
 			<b-modal
 				v-if="current_repo_node"
 				v-model="showAddNode"
@@ -227,7 +249,9 @@ export default {
 		return {
 			showSideBar: true,
 			showAddNode: false,
+			showDeleteNode: false,
 			showAddCollection: false,
+			showCollectionChooser: false,
 			new_collection: '',
 			initAddNode: false,
 			nodes: null,
@@ -253,12 +277,10 @@ export default {
 				},
 				"process": {
 					"strings": "String operations",
-					"documents": "Modify whole records",
 					"format": "Format/Map data",
 					"collection": "Manage collection",
 					"files": "File operations",
-					"lookups": "Look up data",
-					"pipe": "Series of operations",
+					"lookups": "Look up data"
 				},
 				"export": {
 					"file": "Export data to file",
@@ -276,7 +298,7 @@ export default {
 			if(this.$route.query.collection) {
 				this.getCurrentCollectionFromURL()
 			} else {
-				this.current = null
+				this.current_collection = null
 			}
 		}
 	},
@@ -292,6 +314,17 @@ export default {
 			//if(this.project.collections[0) $router.push()
 		},
 
+		async deleteNode() {
+			try {
+				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
+				this.$G.current_node = null
+				this.loadNodes()
+				this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + this.$route.query.collection + '&update=' + this.getRandomInt(10,100000)})
+			} catch(e) {
+				console.log(e)
+			}
+		},
+
 		async loadNodes(current) {
 			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/nodes?limit=100`)
 			console.log('nodet haettu...')
@@ -300,6 +333,8 @@ export default {
 			if(current) {
 				this.$G.current_node = this.nodes.find(node => node._id === current)  // "current" is set on node creation
 				this.$G.showNodeSettings = true
+			} else {
+				this.$G.current_node = null
 			}
 
 		},
@@ -326,7 +361,7 @@ export default {
 			// set params UI script
 			if(this.current_repo_node && this.current_repo_node.scripts.ui_params) {
 				var settingsScript = new Function('node', '$', 'g_apipath', this.current_repo_node.scripts.ui_params);
-				settingsScript(this.current_repo_node, $, 'http://localhost:8080/api/v2');
+				settingsScript(this.current_repo_node, $, 'api/v2');
 			} else {
 				$('#node-parameters').append('<br>DEBUG: no params script')
 			}
@@ -381,8 +416,14 @@ export default {
 				project: this.$G.current_project._id,
 				title: this.new_collection
 			}
+			this.showCollectionChooser = false
 			var col_result = await axios.post('/api/v2/collections', collection_init)
-			console.log(col_result)
+			try {
+				var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
+			} catch(e) {
+				alert('Collection creation failed! ' + e)
+			}
+			this.$G.current_project = response.data
 			this.$router.replace({ path: '/projects/' + this.$G.current_project._id + '?collection=' + col_result.data.id }).catch(err => {console.log(err)})
 		},
 
@@ -422,7 +463,14 @@ export default {
 		async getNodesFromRepository() {
 			var response = await axios(`/api/v2/repository/nodes?limit=100`)
 			this.repository = response.data.data
+		},
+
+		getRandomInt(min, max) {
+			min = Math.ceil(min);
+			max = Math.floor(max);
+			return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 		}
+
 	},
 
 	created: function() {

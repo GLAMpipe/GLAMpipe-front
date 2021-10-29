@@ -36,6 +36,7 @@ export default {
 			var response = await axios(`/api/v2/projects/${this.$route.params.id}`)
 			this.$store.commit('current_project', response.data)
 		},
+		
 		getSettingsFromUI() {
 			// read settings with jquery
 			var settings = {};

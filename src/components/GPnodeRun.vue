@@ -3,11 +3,23 @@
   cursor: pointer;
 }
 .card-header {
-	background-color: #cbd2ea;
+	background-color: #e4e8e3;
 	border-left: solid rgba(52,123,255,1) 10px;
 }
 .card {
 	border: none
+}
+.card-body {
+	padding:0px
+}
+.pointer {
+  cursor: pointer;
+}
+.tabbi {
+	background-color: #ffffff;
+}
+.settings-body {
+	background-color: #e4e8e3
 }
 </style>
 
@@ -17,8 +29,8 @@
 		<b-card v-if="$G.current_node"  >
 			<template #header>
 
-				<h6 class="mb-0">
-					<b-link @click="$G.showNodeSettings = !$G.showNodeSettings" >
+				<h6 class="mb-0 pointer" @click="$G.showNodeSettings = !$G.showNodeSettings" >
+					<b-link >
 						<b-icon v-if="!$G.showNodeSettings" icon="caret-down"></b-icon>
 						<b-icon v-if="$G.showNodeSettings" icon="caret-up"></b-icon>
 					</b-link>
@@ -27,13 +39,13 @@
 			</h6>
 			</template>
 
-			<b-card-body v-if="$G.showNodeSettings" style="padding:0.25rem" text-variant="info">
+			<b-card-body v-if="$G.showNodeSettings" text-variant="info">
 				<!--<b-card-sub-title class="mb-2">{{$G.current_node.description}}</b-card-sub-title>-->
 
 
-				<b-tabs  content-class="mt-3" @activate-tab="initTab">
-					<b-tab title="Settings" active>
-						<GPnodeSettings></GPnodeSettings>
+				<b-tabs  content-class="mt-3 tabbi" class="card-header" @activate-tab="initTab">
+					<b-tab title="Settings"  active>
+						<GPnodeSettings ></GPnodeSettings>
 						<br>
 						<template v-if="!$store.state.running_node">
 							<b-button v-if="!$G.running_node && $G.current_node.type == 'source'" @click="$parent.runNode()" variant="primary"><b-icon icon="play"></b-icon> Import data</b-button>
@@ -58,45 +70,40 @@
 						<textarea cols="100" v-model="$G.current_node.description"></textarea><br>
 						<b-button @click="saveNodeDescription()">Save</b-button>
 					</b-tab>
-
+<!--
 					<b-tab title="Before JS">
 						<editor id="code-editor" v-model="$G.current_node.scripts.init" @init="editorInit" lang="javascript" theme="twilight" width="100%" height="400"></editor>
-						<div>Init.js is called only start of the node excution. <br>Init.js can set execution time variables (context.VARIABLENAME) and core.login when needed.</div>
+						<div>Init script is called only start of the node excution. <br>Init can set execution time variables (context.VARIABLENAME) and core.login when needed.</div>
 						<br>
 						<b-button @click="saveScript('init')" variant="primary" title="Save your own version of script">Save</b-button>
 						<b-button @click="revertScript('init')" title="Revert script to its original form" class="float-right">Revert</b-button>
 					</b-tab>
-
-					<b-tab title="options.js" v-if="$G.current_node.scripts.options">
+-->
+					<b-tab title="Options JS" v-if="$G.current_node.scripts.options">
+						<div>Options script is called once for every document before process.js. It should set core.options.</div>
 						<editor id="code-editor" v-model="$G.current_node.scripts.options" @init="editorInit" lang="javascript" theme="twilight" width="100%" height="400"></editor>
-						<div>Options.js is called once for every document before process.js. It should set core.options.</div>
 						<br>
 						<b-button @click="saveScript('options')" variant="primary" title="Save your own version of script">Save</b-button>
 						<b-button @click="revertScript('options')" title="Revert script to its original form" class="float-right">Revert</b-button>
 					</b-tab>
 
 					<b-tab title="Processing JS">
+						<div>Processing script is called once for every document.</div>
 						<editor id="code-editor" v-model="$G.current_node.scripts.process" @init="editorInit" lang="javascript" theme="twilight" width="100%" height="400"></editor>
-						<div>Process.js is called once for every document.</div>
 						<br>
 						<b-button @click="saveScript('process')" variant="primary" title="Save your own version of script">Save</b-button>
 						<b-button @click="revertScript('process')" title="Revert script to its original form" class="float-right">Revert</b-button>
 					</b-tab>
-
+<!--
 					<b-tab title="After JS">
 						<editor id="code-editor" v-model="$G.current_node.scripts.finish" @init="editorInit" lang="javascript" theme="twilight" width="100%" height="400"></editor>
-						<div>Finish.js is called once in the end of node execution.</div>
+						<div>After script is called once in the end of node execution.</div>
 						<br>
 						<b-button @click="saveScript('finish')" variant="primary" title="Save your own version of script">Save</b-button>
 						<b-button @click="revertScript('finish')" title="Revert script to its original form" class="float-right">Revert</b-button>
 					</b-tab>
+-->
 
-					<b-tab title="delete">
-						<b-button  variant="danger" @click="deleteNode">
-							<b-icon  icon="x-circle" title="Remove node">delete</b-icon>
-							Delete this node!
-						</b-button>
-					</b-tab>
 
 					<b-tab title="debug">
 						<h5>params</h5>
@@ -168,16 +175,7 @@ export default {
 				this.info = "Revert failed"
 			}
 		},
-		async deleteNode() {
-			try {
-				await axios.delete(`/api/v2/nodes/${this.$G.current_node._id}`)
-				this.$G.current_node = null
-				this.loadNodes()
-				//location.reload()
-			} catch(e) {
-				console.log(e)
-			}
-		},
+
 		initTab() {
 			this.info = ''
 		},
