@@ -75,8 +75,11 @@ export default {
 
 	methods: {
 		projectURL(project) {
-			if(project.collections.length)
-			return `/projects/${project._id}?collection=${project.collections[0].name}`
+			if(project.collections && project.collections.length)
+				return `/projects/${project._id}?collection=${project.collections[0].name}`
+			else
+				return `/projects/${project._id}`
+
 		},
 		async loadData() {
 			var response = await axios("/api/v2/projects?sort=star,created&limit=100")
