@@ -20,6 +20,8 @@ const store = new Vuex.Store({
 		running_projects: null,
 		current_collection: null,
 		running_node: null,
+		output_fields: null,
+		input_fields: null,
 		visible: [],
 		user: {},
 		socket_finish: {},

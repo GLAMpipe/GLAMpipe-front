@@ -219,7 +219,9 @@ settingaction label {
 					<b-button @click="uncheck()">uncheck all</b-button>
 					<b-row cols="3">
 						<template v-for="key in schema.keys"  >
-							<b-col :key="key"><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
+							<b-col :key="key" v-if="checkLabelOutputGen(key)"><b-form-checkbox  v-model="selected_fields" :value="key"><b-badge variant="success" title="node output field">{{key}}</b-badge></b-form-checkbox></b-col>
+							<b-col :key="key" v-else-if="checkLabelInputGen(key)"><b-form-checkbox  v-model="selected_fields" :value="key"><b-badge title="node input field">{{key}}</b-badge></b-form-checkbox></b-col>
+							<b-col :key="key" v-else><b-form-checkbox  v-model="selected_fields" :value="key">{{key}}</b-form-checkbox></b-col>
 						</template>
 					</b-row>
 				</b-container>
@@ -257,9 +259,13 @@ settingaction label {
 					</b-tr>
 				</template>
 			-->
+				<!-- CUSTOM HEADER -->
 				<template #head()="data">
-					<span class="text-primary">{{ data.label }}</span>
+					<span v-if="checkLabelInput(data.label)" class="text-primary"><b-badge>{{ data.label }}</b-badge> </span>
+					<span v-else-if="checkLabelOutput(data.label)" class="text-primary"><b-badge variant="success">{{ data.label }}</b-badge> </span>
+					<span v-else class="text-primary">{{ data.label }}</span>
 				</template>
+				<!-- /CUSTOM HEADER -->
 
 				<template #cell(action)="data">
 					<div v-if="$G.showNodeSettings">
@@ -327,20 +333,20 @@ export default {
 			this.table_fields = []
 			if(this.$G.current_node && (this.$G.current_node.type == 'process' || this.$G.current_node.type == 'export')) this.table_fields.push({'key':'action', 'label':'action', 'sortable': false})
 			this.table_fields = this.table_fields.concat(this.current_fields.map(key => {return {'key':key, 'label':key, 'sortable': true}}))
-			console.log(this.table_fields)
-			console.log(typeof this.table_fields)
+
 
 			this.loadData()
 		},
 		async $route(from, to) {
-			console.log('route vaihtui table-watch')
-			console.log(from)
-			console.log(to)
 			// if we changed collection, we must set user fields
 			if(from.query.collection != to.query.collection) this.setFields()
+			this.query_field = ''
+			this.query_value = ''
+			this.query_key = ''
 			this.loadData()
 		},
 		async "$G.current_node"() {
+			this.current_fields = []
 			if(this.$G.current_node && (this.$G.current_node.type == 'process' || this.$G.current_node.type == 'export')) this.current_fields = await this.getNodeFields(this.$G.current_node)
 			else this.current_fields = this.selected_fields
 		},
@@ -350,16 +356,31 @@ export default {
 	},
 
 	methods: {
+		checkLabelInput(label) {
+			if(this.$G.current_node && this.$G.current_node.input.includes(label))
+			return true
+		},
+		checkLabelOutput(label) {
+			if(this.$G.current_node && this.$G.current_node.output.includes(label))
+			return true
+		},
+		checkLabelOutputGen(label) {
+			if(this.$G.output_fields && this.$G.output_fields.includes(label))
+			return true
+		},
+		checkLabelInputGen(label) {
+			if(this.$G.input_fields && this.$G.input_fields.includes(label))
+			return true
+		},
 		async getNodeFields(node) {
 			var fields = []
-			if(node.params) {
-				if(node.params.in_field) fields.push(node.params.in_field)
-				if(node.params.out_field) fields.push(node.params.out_field)
+			if(node) {
+				if(node.output) fields = fields.concat(node.output)
+				if(node.input) fields = fields.concat(node.input)
 				var userfields = await this.getUserFields()
-				//var p = [...new Set([...fields,...userfields])]
-				//console.log(p)
 				return  [...new Set([...fields,...userfields])]
 			}
+
 		},
 		async getUserFields() {
 			await this.loadSchema()

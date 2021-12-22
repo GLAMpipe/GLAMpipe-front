@@ -3,7 +3,7 @@
   cursor: pointer;
 }
 .card-header {
-	background-color: #e4e8e3;
+	background-color: white;
 	border-left: solid rgba(52,123,255,1) 10px;
 }
 .card {

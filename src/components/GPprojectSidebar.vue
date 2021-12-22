@@ -1,17 +1,27 @@
 <style scoped>
+.project-sidebar {
+	background-color:white;
+}
+
 .pointer {
   cursor: pointer;
 }
 .active_node {
 	background-color: #e4e8e3;
-	border-left: solid rgba(52,123,255,1) 10px;
+	border-left: solid rgba(52,123,255,1) 10px !important;;
 }
+
+.active_node .boxtitle{
+	font-weight: 700
+}
+
 .bg-info {
 	background:none !important;
 	color:black
 }
 .node {
-	background-color: #e4e8e3;
+	background-color: #fbfbfb;
+	border: solid rgba(213,213,213,1) 1px;
 }
 .card-header {
 	background: none
@@ -48,8 +58,8 @@ h5. {
 }
 .box:hover {
 	cursor: pointer;
-	background-color: #e4e8e3;
 	padding-left: 10px;
+	border-left: solid rgb(169, 196, 247) 10px;
 }
 .boxtitle {
 	font-weight: 400;
@@ -58,12 +68,20 @@ h5. {
 .description {
 	font-weight: 300
 }
+.sub {
+	border-left: solid rgba(52,123,255,1) 2px;
+}
+
+.not-collapsed {
+	font-weight: 700;
+}
+
 
 
 </style>
 
 <template>
-	<b-card class="project-sidebar" v-show="showSideBar" header-tag="header" style="background-color: #EFEFEF">
+	<b-card class="project-sidebar" v-show="showSideBar" header-tag="header" >
 
 		<!-- // COLLECTION LIST -->
 			<template #header>
@@ -117,12 +135,12 @@ h5. {
 							<b-list-group>
 								<b-list-group-item   v-for="(title, subtype) in verbose[type.key]" :key="title">
 									<b-navbar-toggle :target="`${type.key}-${subtype}`">{{title}}</b-navbar-toggle>
-									<b-collapse :id="`${type.key}-${subtype}`"  is-nav style="margin-bottom:2em">
+									<b-collapse :id="`${type.key}-${subtype}`"  is-nav style="margin-bottom:2em" class="sub">
 										<div>
 											<template v-for="rnode in repository">
 												<b-card v-if="rnode.type == type.key && rnode.subtype == subtype" :key="rnode._id">
 													<b-link @click="current_repo_node = rnode; showAddNode = true">{{rnode.title}}</b-link>
-													<p>{{rnode.description}}</p>
+													<p class="small">{{rnode.description}}</p>
 												</b-card>
 											</template>
 										</div>
@@ -140,13 +158,11 @@ h5. {
 
 								<div @click="setCurrentNode(node)">
 
+									<div v-if="node.node_description" class="title boxtitle">{{node.node_description}}</div>
+									<div v-else class="title boxtitle">{{node.title}}</div>
 
-									<div v-if="node.node_description" class="title boxtitle"><b>{{node.node_description}}</b></div>
-									<div v-else class="title boxtitle"><b>{{node.title}}</b></div>
-
+									<div><GPNode v-bind:node="node"/></div>
 									<div v-if="node.params.file">file: {{node.params.file}}</div>
-									<div v-if="node.params.out_field"><i> {{node.params.out_field}}</i></div>
-
 
 
 									<!--
@@ -242,9 +258,11 @@ h5. {
 <script>
 import axios from "axios"
 import $ from 'jquery'
+import GPNode from './GPNode.vue'
 
 export default {
 	name: 'GPProjectSidebar',
+	components: {GPNode},
 	data() {
 		return {
 			showSideBar: true,
@@ -276,7 +294,7 @@ export default {
 					"directory": "Read data from directory"
 				},
 				"process": {
-					"strings": "String operations",
+					"strings": "Field operations",
 					"format": "Format/Map data",
 					"collection": "Manage collection",
 					"files": "File operations",
@@ -300,6 +318,10 @@ export default {
 			} else {
 				this.current_collection = null
 			}
+		},
+		"$store.state.running_node"() {
+			console.log('NODE RUN notified')
+			this.loadNodes()
 		}
 	},
 
@@ -330,21 +352,44 @@ export default {
 			console.log('nodet haettu...')
 			this.nodes = response.data.nodes
 			this.sortNodes()
-			if(current) {
-				this.$G.current_node = this.nodes.find(node => node._id === current)  // "current" is set on node creation
+
+			// we want that newly created node becomes selected node
+			if(current) { // "current" is set on node creation
+				this.$G.current_node = this.nodes.find(node => node._id === current)
 				this.$G.showNodeSettings = true
+			} else 	if(this.$G.current_node) {
+				this.$G.showNodeSettings = true
+				var currentNode  = this.nodes.find(node => node._id === this.$G.current_node._id)
+				if(!currentNode) this.$G.current_node = null
 			} else {
 				this.$G.current_node = null
 			}
+			// combine all output fields so that they can be accessed from visible fields selector
+			var outputs = []
+			var inputs = []
+			for(var node of this.nodes) {
+				outputs = outputs.concat(node.output)
+				inputs = inputs.concat(node.input)
+			}
+			this.$G.output_fields = outputs
+			this.$G.input_fields = inputs
 
 		},
 
 		sortNodes() {
+
+			// sort by node types
 			this.nodes_sorted = {}
 			for(var node of this.nodes) {
 				if(this.nodes_sorted[node.type]) this.nodes_sorted[node.type].push(node)
 				else this.nodes_sorted[node.type] = [node]
+
+				// check that node input fields exists
+				//for(var field of node.input) {
+
+				//}
 			}
+
 		},
 
 		async initNodeParams() {
