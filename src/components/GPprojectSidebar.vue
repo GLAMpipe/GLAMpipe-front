@@ -8,7 +8,7 @@
 }
 .active_node {
 	background-color: #e4e8e3;
-	border-left: solid rgba(52,123,255,1) 10px !important;;
+	border-left: solid rgba(52,123,255,1) 10px !important;
 }
 
 .active_node .boxtitle{
@@ -91,7 +91,8 @@ h5. {
 							<b-icon icon="caret-left"></b-icon>
 						</span>
 
-						<b-navbar-brand><h5>Nodes for
+						<b-navbar-brand>
+							<span>Nodes for </span>
 							<b-navbar-toggle target="nav-collapse" >{{$G.current_collection.title}} <b-icon icon="caret-down"></b-icon></b-navbar-toggle>
 							<b-collapse id="nav-collapse" v-model="showCollectionChooser" is-nav>
 								<b-navbar-nav class="ml-auto" >
@@ -106,7 +107,6 @@ h5. {
 									<b-icon variant="info" icon="plus-circle-fill"></b-icon>
 								</b-link>
 							</b-collapse>
-						</h5>
 
 						</b-navbar-brand>
 					</b-navbar>
@@ -162,7 +162,7 @@ h5. {
 									<div v-else class="title boxtitle">{{node.title}}</div>
 
 									<div><GPNode v-bind:node="node"/></div>
-									<div v-if="node.params.file">file: {{node.params.file}}</div>
+									<div v-if="node.params.file"><b-badge>{{node.params.file}}</b-badge></div>
 
 
 									<!--
@@ -279,6 +279,7 @@ export default {
 			params_html: '',
 			nodes_sorted: null,
 			repository: [],
+			schema: null,
 			nodetypes: [
 				{key:'source', label:'Read data'},
 				{key:'process', label:'Process the data'},
@@ -358,8 +359,13 @@ export default {
 				this.$G.current_node = this.nodes.find(node => node._id === current)
 				this.$G.showNodeSettings = true
 			} else 	if(this.$G.current_node) {
+				// if we have a current node, then update its settings and error status without changing the object itself
 				this.$G.showNodeSettings = true
 				var currentNode  = this.nodes.find(node => node._id === this.$G.current_node._id)
+				if(currentNode) {
+					this.$G.current_node.settings = currentNode.settings
+					this.$G.current_node.error = currentNode.error
+				}
 				if(!currentNode) this.$G.current_node = null
 			} else {
 				this.$G.current_node = null
@@ -376,7 +382,10 @@ export default {
 
 		},
 
-		sortNodes() {
+		async sortNodes() {
+
+			var response = await axios(`/api/v2/collections/${this.$route.query.collection}/schema`)
+			this.schema = response.data
 
 			// sort by node types
 			this.nodes_sorted = {}
@@ -385,9 +394,9 @@ export default {
 				else this.nodes_sorted[node.type] = [node]
 
 				// check that node input fields exists
-				//for(var field of node.input) {
-
-				//}
+				for(var field of node.input) {
+					if(!this.schema.keys.includes(field)) node.error = `input '${field}' missing `
+				}
 			}
 
 		},
@@ -413,16 +422,15 @@ export default {
 		},
 
 		async createNode() {
-			$("#node-parameters input").each(function() {
-				console.log($(this).val())
-			})
 			// read params with jquery
 			var params = {}
+			var outputs = []
 			$('#node-parameters').find("input.node-params, textarea.node-params, select.node-params").each(function(){
 				if($(this).attr("type") == "checkbox") {
 					if($(this).is(':checked'))
 						params[$(this).attr("name")] = "on";
 				} else {
+					if($(this).attr("name").startsWith('out_')) outputs.push($(this).val())
 					params[$(this).attr("name")] = $(this).val();
 				}
 			})
@@ -435,8 +443,8 @@ export default {
 			}
 
 			try {
-				// we need to create form for file import (upload)
 				var node_result = null
+				// we need to create form for file import (upload)
 				if(this.current_repo_node.type === 'source' && this.current_repo_node.subtype === 'file') {
 					let file = document.getElementById('file').files[0]
 					if(!file || !(file instanceof File)) throw('You must upload file!')
@@ -452,7 +460,11 @@ export default {
 				this.loadNodes(node_result.data.uuid)
 				//location.reload()
 			} catch(e) {
-				alert('Node creation failed ' + e)
+				if(e.response && e.response.data && e.response.data.error)
+					alert('Node creation failed: ' + e.response.data.error)
+				else
+					alert('Node creation failed: ' + e)
+				this.showAddNode = true // keep dialog open
 			}
 		},
 

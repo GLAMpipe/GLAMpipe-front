@@ -47,6 +47,7 @@
 					<b-tab title="Settings"  active>
 						<GPnodeSettings ></GPnodeSettings>
 						<br>
+						<div v-if="$G.current_node.error" class="alert "><b-icon   icon="exclamation-triangle-fill" variant="danger"></b-icon> {{$G.current_node.error}}</div>
 						<template v-if="!$store.state.running_node">
 							<b-button v-if="!$G.running_node && $G.current_node.type == 'source'" @click="$parent.runNode()" variant="primary"><b-icon icon="play"></b-icon> Import data</b-button>
 							<b-button v-if="!$G.running_node && $G.current_node.type == 'process'" @click="$parent.runNode()" variant="primary"><b-icon icon="play"></b-icon> Run for all documents</b-button>
@@ -109,18 +110,20 @@
 						<h5>params</h5>
 						<table class="table b-table">
 							<tr v-for="(val,i) in $G.current_node.params" :key="`set${val}`">
-								<td>{{i}}</td><td><b>{{val}}</b></td>
+								<td><b>{{i}}</b></td><td>{{val}}</td>
 							</tr>
 						</table>
 						<h5>settings</h5>
 						<table class="table b-table">
 							<tr v-for="(val,i) in $G.current_node.settings" :key="`set${val}`">
-								<td>{{i}}</td><td><b>{{val}}</b></td>
+								<template v-if="i == 'last_run'"><td><b>{{i}}</b></td><td>{{getLastRun(val)}}</td></template>
+								<template v-else><td><b>{{i}}</b></td><td>{{val}}</td></template>
 							</tr>
 						</table>
 
 
-						<a target="_blank" :href="`http://localhost:3333/api/v2/nodes/${$G.current_node._id}`">API</a><br>
+						<a target="_blank" :href="`http://localhost:3000/api/v2/nodes/${$G.current_node._id}`">API</a><br>
+						<br>
 						<b-button @click="$store.commit('running_node', $G.current_node)">debug run</b-button>
 						<b-button @click="$store.commit('running_node', null)">debug stop</b-button>
 					</b-tab>
@@ -150,6 +153,10 @@ export default {
 		}
 	},
 	methods: {
+		getLastRun(stamp) {
+				var date = new Date(stamp)
+				return date.getFullYear() + '.' + (date.getMonth()+1) + '.' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes()
+		},
 		async saveNodeDescription() {
 			try {
 				var update = {description: this.$G.current_node.description}
